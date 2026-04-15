@@ -1,9 +1,7 @@
-using Microsoft.Extensions.Options;
-
 using CsvJoin.Abstractions.Application;
 using CsvJoin.Abstractions.Csv;
 using CsvJoin.Abstractions.Presentation;
-using CsvJoin.Configuration;
+using CsvJoin.Models;
 
 namespace CsvJoin.Application;
 
@@ -12,68 +10,55 @@ namespace CsvJoin.Application;
 /// </summary>
 internal sealed class CsvJoinApplication : ICsvJoinApplication
 {
-    private readonly IConfiguredJoinJobFactory _configuredJoinJobFactory;
-    private readonly ICsvFileReader _csvFileReader;
-    private readonly ICsvJoinProcessor _csvJoinProcessor;
-    private readonly IConsoleOutputRenderer _consoleOutputRenderer;
-    private readonly IResultFileWriter _resultFileWriter;
-    private readonly IResultFileLauncher _resultFileLauncher;
-    private readonly AppSettings _settings;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="CsvJoinApplication"/> class.
     /// </summary>
-    /// <param name="configuredJoinJobFactory">The factory that creates executable join jobs.</param>
+    /// <param name="configuredJoinJob">The configured join job to execute.</param>
     /// <param name="csvFileReader">The CSV reader.</param>
     /// <param name="csvJoinProcessor">The join processor.</param>
     /// <param name="consoleOutputRenderer">The console renderer.</param>
     /// <param name="resultFileWriter">The result file writer.</param>
     /// <param name="resultFileLauncher">The shell file launcher.</param>
-    /// <param name="options">The application settings.</param>
     public CsvJoinApplication(
-        IConfiguredJoinJobFactory configuredJoinJobFactory,
+        ConfiguredJoinJob configuredJoinJob,
         ICsvFileReader csvFileReader,
         ICsvJoinProcessor csvJoinProcessor,
         IConsoleOutputRenderer consoleOutputRenderer,
         IResultFileWriter resultFileWriter,
-        IResultFileLauncher resultFileLauncher,
-        IOptions<AppSettings> options)
+        IResultFileLauncher resultFileLauncher)
     {
-        ArgumentNullException.ThrowIfNull(configuredJoinJobFactory);
+        ArgumentNullException.ThrowIfNull(configuredJoinJob);
         ArgumentNullException.ThrowIfNull(csvFileReader);
         ArgumentNullException.ThrowIfNull(csvJoinProcessor);
         ArgumentNullException.ThrowIfNull(consoleOutputRenderer);
         ArgumentNullException.ThrowIfNull(resultFileWriter);
         ArgumentNullException.ThrowIfNull(resultFileLauncher);
-        ArgumentNullException.ThrowIfNull(options);
 
-        _configuredJoinJobFactory = configuredJoinJobFactory;
+        _configuredJoinJob = configuredJoinJob;
         _csvFileReader = csvFileReader;
         _csvJoinProcessor = csvJoinProcessor;
         _consoleOutputRenderer = consoleOutputRenderer;
         _resultFileWriter = resultFileWriter;
         _resultFileLauncher = resultFileLauncher;
-        _settings = options.Value;
     }
 
     /// <inheritdoc />
     public async Task<int> RunAsync(CancellationToken cancellationToken)
     {
-        var job = _configuredJoinJobFactory.Create(_settings);
-        _consoleOutputRenderer.RenderHeader(job);
+        _consoleOutputRenderer.RenderHeader(_configuredJoinJob);
 
-        var leftTask = _csvFileReader.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, cancellationToken);
-        var rightTask = _csvFileReader.ReadAsync(job.RightSource.Alias, job.RightSource.Options, cancellationToken);
+        var leftTask = _csvFileReader.ReadAsync(_configuredJoinJob.LeftSource.Alias, _configuredJoinJob.LeftSource.Options, cancellationToken);
+        var rightTask = _csvFileReader.ReadAsync(_configuredJoinJob.RightSource.Alias, _configuredJoinJob.RightSource.Options, cancellationToken);
 
         await Task.WhenAll(leftTask, rightTask).ConfigureAwait(false);
 
-        var result = _csvJoinProcessor.Process(job.Query, await leftTask.ConfigureAwait(false), await rightTask.ConfigureAwait(false));
-        _consoleOutputRenderer.RenderResult(result, job.Output.ConsoleMaxRows);
+        var result = _csvJoinProcessor.Process(_configuredJoinJob.Query, await leftTask.ConfigureAwait(false), await rightTask.ConfigureAwait(false));
+        _consoleOutputRenderer.RenderResult(result, _configuredJoinJob.Output.ConsoleMaxRows);
 
-        var outputFile = await _resultFileWriter.WriteAsync(result, job.Output, cancellationToken).ConfigureAwait(false);
+        var outputFile = await _resultFileWriter.WriteAsync(result, _configuredJoinJob.Output, cancellationToken).ConfigureAwait(false);
         _consoleOutputRenderer.PrintFileSaved(outputFile);
 
-        if (!job.Output.OpenResultAfterBuild)
+        if (!_configuredJoinJob.Output.OpenResultAfterBuild)
         {
             return 0;
         }
@@ -89,4 +74,11 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
 
         return 0;
     }
+
+    private readonly ConfiguredJoinJob _configuredJoinJob;
+    private readonly ICsvFileReader _csvFileReader;
+    private readonly ICsvJoinProcessor _csvJoinProcessor;
+    private readonly IConsoleOutputRenderer _consoleOutputRenderer;
+    private readonly IResultFileWriter _resultFileWriter;
+    private readonly IResultFileLauncher _resultFileLauncher;
 }

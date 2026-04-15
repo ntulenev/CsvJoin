@@ -2,8 +2,6 @@ using FluentAssertions;
 
 using Moq;
 
-using Microsoft.Extensions.Options;
-
 using CsvJoin.Abstractions.Presentation;
 using CsvJoin.Application;
 using CsvJoin.Configuration;
@@ -47,6 +45,7 @@ public class CsvJoinApplicationEndToEndTests
                     ResultsDirectory = resultsDirectory,
                 },
             };
+            var configuredJoinJob = new ConfiguredJoinJobBinder(new CsvJoinQueryParser()).Bind(settings);
 
             JoinOutputFile? capturedOutputFile = null;
             var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
@@ -59,13 +58,12 @@ public class CsvJoinApplicationEndToEndTests
             var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
 
             var sut = new CsvJoinApplication(
-                new ConfiguredJoinJobFactory(new CsvJoinQueryParser()),
+                configuredJoinJob,
                 new CsvFileReader(),
                 new CsvJoinProcessor(),
                 consoleOutputRendererMock.Object,
                 new CsvResultFileWriter(),
-                resultFileLauncherMock.Object,
-                Options.Create(settings));
+                resultFileLauncherMock.Object);
 
             // Act
             var resultCode = await sut.RunAsync(CancellationToken.None);

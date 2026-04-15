@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-using CsvJoin.Models;
+using CsvJoin.Csv.Syntax;
 
 namespace CsvJoin.Csv;
 
@@ -9,63 +9,30 @@ namespace CsvJoin.Csv;
 /// </summary>
 internal static partial class SelectProjectionParser
 {
-    private const string CoalesceFunctionName = "COALESCE";
-
     /// <summary>
     /// Parses a single projection expression.
     /// </summary>
     /// <param name="item">The projection text.</param>
-    /// <returns>The parsed select column.</returns>
-    public static SelectColumn Parse(string item)
+    /// <returns>The parsed projection syntax node.</returns>
+    public static SelectProjectionSyntax Parse(string item)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(item);
 
         var parts = SplitAlias(item);
         var projection = ParseProjection(parts.Expression);
-        var outputField = parts.OutputAlias ?? projection.SourceField;
+        var outputField = parts.OutputAlias ?? projection.FieldReference.SourceField;
 
-        if (projection.IsWildcard && parts.OutputAlias is not null)
+        if (projection.FieldReference.IsWildcard && parts.OutputAlias is not null)
         {
             throw new FormatException("Wildcard selections cannot use AS aliases.");
         }
 
-        return new SelectColumn(
-            projection.SourceAlias,
-            projection.SourceField,
-            outputField,
-            projection.IsWildcard,
-            projection.DefaultValue);
-    }
-
-    /// <summary>
-    /// Parses a field reference in the form <c>alias.Column</c> or <c>alias.[Column Name]</c>.
-    /// </summary>
-    /// <param name="expression">The field reference text.</param>
-    /// <param name="allowWildcard">Indicates whether <c>*</c> is allowed as field reference.</param>
-    /// <returns>The parsed field reference parts.</returns>
-    public static (string SourceAlias, string SourceField, bool IsWildcard) ParseFieldReference(string expression, bool allowWildcard)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(expression);
-
-        var match = FieldPattern().Match(expression.Trim());
-        if (!match.Success)
+        return projection switch
         {
-            throw new FormatException($"Field reference '{expression}' is invalid. Use alias.Column or alias.[Column Name].");
-        }
-
-        var alias = match.Groups["alias"].Value;
-        var fieldToken = match.Groups["field"].Value;
-        if (fieldToken == "*")
-        {
-            if (!allowWildcard)
-            {
-                throw new FormatException("Wildcard is not allowed in JOIN ON clause.");
-            }
-
-            return (alias, fieldToken, true);
-        }
-
-        return (alias, UnwrapIdentifier(fieldToken), false);
+            CoalesceSelectProjectionSyntax coalesceProjection => coalesceProjection with { OutputField = outputField },
+            FieldSelectProjectionSyntax fieldProjection => fieldProjection with { OutputField = outputField },
+            _ => throw new InvalidOperationException($"Unsupported projection type '{projection.GetType().Name}'."),
+        };
     }
 
     private static (string Expression, string? OutputAlias) SplitAlias(string item)
@@ -78,17 +45,18 @@ internal static partial class SelectProjectionParser
 
         var expression = match.Groups["expr"].Value.Trim();
         var aliasGroup = match.Groups["alias"];
-        var outputAlias = aliasGroup.Success ? UnwrapIdentifier(aliasGroup.Value.Trim()) : null;
+        var outputAlias = aliasGroup.Success ? FieldReferenceParser.UnwrapIdentifier(aliasGroup.Value.Trim()) : null;
         return (expression, outputAlias);
     }
 
-    private static ParsedProjection ParseProjection(string expression)
+    private static SelectProjectionSyntax ParseProjection(string expression)
     {
         var trimmedExpression = expression.Trim();
         if (!trimmedExpression.StartsWith($"{CoalesceFunctionName}(", StringComparison.OrdinalIgnoreCase))
         {
-            var fieldReference = ParseFieldReference(trimmedExpression, allowWildcard: true);
-            return new ParsedProjection(fieldReference.SourceAlias, fieldReference.SourceField, fieldReference.IsWildcard, null);
+            return new FieldSelectProjectionSyntax(
+                FieldReferenceParser.Parse(trimmedExpression, allowWildcard: true),
+                string.Empty);
         }
 
         var match = CoalescePattern().Match(trimmedExpression);
@@ -97,20 +65,9 @@ internal static partial class SelectProjectionParser
             throw new FormatException($"SELECT expression '{expression}' is invalid.");
         }
 
-        var parsedFieldReference = ParseFieldReference(match.Groups["field"].Value, allowWildcard: false);
+        var fieldReference = FieldReferenceParser.Parse(match.Groups["field"].Value, allowWildcard: false);
         var defaultValue = UnescapeStringLiteral(match.Groups["default"].Value);
-        return new ParsedProjection(parsedFieldReference.SourceAlias, parsedFieldReference.SourceField, parsedFieldReference.IsWildcard, defaultValue);
-    }
-
-    private static string UnwrapIdentifier(string token)
-    {
-        var trimmed = token.Trim();
-        if (trimmed.StartsWith('[') && trimmed.EndsWith(']'))
-        {
-            return trimmed[1..^1];
-        }
-
-        return trimmed;
+        return new CoalesceSelectProjectionSyntax(fieldReference, defaultValue, string.Empty);
     }
 
     private static string UnescapeStringLiteral(string token) => token.Replace("''", "'", StringComparison.Ordinal);
@@ -125,10 +82,5 @@ internal static partial class SelectProjectionParser
         RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex CoalescePattern();
 
-    [GeneratedRegex(
-        @"^(?<alias>[A-Za-z_][A-Za-z0-9_]*)\.(?<field>\*|\[[^\]]+\]|[A-Za-z_][A-Za-z0-9_]*)$",
-        RegexOptions.IgnoreCase | RegexOptions.Singleline)]
-    private static partial Regex FieldPattern();
-
-    private sealed record ParsedProjection(string SourceAlias, string SourceField, bool IsWildcard, string? DefaultValue);
+    private const string CoalesceFunctionName = "COALESCE";
 }

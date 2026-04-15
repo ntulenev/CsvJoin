@@ -2,6 +2,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Options;
 
+using CsvJoin.Application;
 using CsvJoin.Configuration;
 using CsvJoin.Csv;
 
@@ -14,7 +15,7 @@ public class AppSettingsValidatorTests
     public void ValidateThrowsWhenOptionsAreNull()
     {
         // Arrange
-        var sut = new AppSettingsValidator(new CsvJoinQueryParser());
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
 
         // Act
         Action action = () => _ = sut.Validate(Options.DefaultName, null!);
@@ -31,7 +32,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id,Name\n1,Alice\n");
         using var rightCsv = TempCsvFile.Create("Id,Status\n1,Active\n");
-        var sut = new AppSettingsValidator(new CsvJoinQueryParser());
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings(leftCsv.Path, rightCsv.Path);
 
         // Act
@@ -46,7 +47,7 @@ public class AppSettingsValidatorTests
     public void ValidateFailsWhenSourceFileDoesNotExist()
     {
         // Arrange
-        var sut = new AppSettingsValidator(new CsvJoinQueryParser());
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings("missing-left.csv", "missing-right.csv");
 
         // Act
@@ -65,7 +66,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id\n1\n");
         using var rightCsv = TempCsvFile.Create("Id\n1\n");
-        var sut = new AppSettingsValidator(new CsvJoinQueryParser());
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings(
             leftCsv.Path,
             rightCsv.Path,
@@ -86,7 +87,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id\n1\n");
         using var rightCsv = TempCsvFile.Create("Id\n1\n");
-        var sut = new AppSettingsValidator(new CsvJoinQueryParser());
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings(
             leftCsv.Path,
             rightCsv.Path,
@@ -107,7 +108,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id\n1\n");
         using var rightCsv = TempCsvFile.Create("Id\n1\n");
-        var sut = new AppSettingsValidator(new CsvJoinQueryParser());
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
         var invalidOutput = new OutputOptions
         {
             ResultsDirectory = " ",
@@ -148,25 +149,5 @@ public class AppSettingsValidatorTests
                 OpenResultAfterBuild = false,
             },
         };
-    }
-
-    private sealed class TempCsvFile(string path) : IDisposable
-    {
-        public string Path { get; } = path;
-
-        public static TempCsvFile Create(string content)
-        {
-            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"{Guid.NewGuid():N}.csv");
-            System.IO.File.WriteAllText(path, content);
-            return new TempCsvFile(path);
-        }
-
-        public void Dispose()
-        {
-            if (File.Exists(Path))
-            {
-                File.Delete(Path);
-            }
-        }
     }
 }

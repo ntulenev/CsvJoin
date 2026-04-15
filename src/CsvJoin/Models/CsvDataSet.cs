@@ -5,8 +5,6 @@ namespace CsvJoin.Models;
 /// </summary>
 internal sealed class CsvDataSet
 {
-    private readonly Dictionary<string, string> _headerLookup;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="CsvDataSet"/> class.
     /// </summary>
@@ -107,4 +105,6 @@ internal sealed class CsvDataSet
 
         return lookup.ToDictionary(static entry => entry.Key, static entry => (IReadOnlyList<CsvDataRow>)entry.Value, StringComparer.Ordinal);
     }
+
+    private readonly Dictionary<string, string> _headerLookup;
 }
