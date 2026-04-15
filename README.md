@@ -1,4 +1,5 @@
 # CsvJoin
+<img src="Logo.png" alt="App logo" width="250">
 
 Console utility that reads two CSV files from `appsettings.json`, applies a SQL-like join from configuration, prints the result to the console, saves the full result to a CSV file, and can open that file after completion.
 
