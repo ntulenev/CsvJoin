@@ -109,6 +109,39 @@ public class CsvFileReaderTests
         await action.Should().ThrowAsync<OperationCanceledException>();
     }
 
+    [Fact(DisplayName = "CsvFileReader ReadAsync supports custom delimiter.")]
+    [Trait("Category", "Unit")]
+    public async Task ReadAsyncSupportsCustomDelimiter()
+    {
+        // Arrange
+        using var csvFile = TempCsvFile.Create("Id;Name\n1;Alice\n");
+        var sut = new CsvFileReader();
+        var source = new CsvSourceOptions { FilePath = csvFile.Path, Delimiter = ";" };
+
+        // Act
+        var result = await sut.ReadAsync("left", source, CancellationToken.None);
+
+        // Assert
+        result.Headers.Should().Equal("Id", "Name");
+        result.Rows[0].Values["Name"].Should().Be("Alice");
+    }
+
+    [Fact(DisplayName = "CsvFileReader ReadAsync reads quoted fields.")]
+    [Trait("Category", "Unit")]
+    public async Task ReadAsyncReadsQuotedFields()
+    {
+        // Arrange
+        using var csvFile = TempCsvFile.Create("Id,Name\n1,\"Alice, Bob\"\n");
+        var sut = new CsvFileReader();
+        var source = new CsvSourceOptions { FilePath = csvFile.Path, Delimiter = "," };
+
+        // Act
+        var result = await sut.ReadAsync("left", source, CancellationToken.None);
+
+        // Assert
+        result.Rows[0].Values["Name"].Should().Be("Alice, Bob");
+    }
+
     private sealed class TempCsvFile(string path) : IDisposable
     {
         public string Path { get; } = path;

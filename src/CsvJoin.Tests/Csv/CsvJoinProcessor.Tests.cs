@@ -117,6 +117,101 @@ public class CsvJoinProcessorTests
         result.Headers.Should().Equal(expectedHeaders);
     }
 
+    [Fact(DisplayName = "CsvJoinProcessor Process returns no rows for inner join without matches.")]
+    [Trait("Category", "Unit")]
+    public void ProcessReturnsNoRowsForInnerJoinWithoutMatches()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, [new SelectColumn("left", "Id", "Id")]);
+        var left = BuildDataSet("left", ["Id"], [["1"]]);
+        var right = BuildDataSet("right", ["Id"], [["2"]]);
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().BeEmpty();
+    }
+
+    [Fact(DisplayName = "CsvJoinProcessor Process returns unmatched right rows for right join.")]
+    [Trait("Category", "Unit")]
+    public void ProcessReturnsUnmatchedRightRowsForRightJoin()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Right, [new SelectColumn("left", "Id", "LeftId"), new SelectColumn("right", "Id", "RightId")]);
+        var left = BuildDataSet("left", ["Id"], [["1"]]);
+        var right = BuildDataSet("right", ["Id"], [["1"], ["2"]]);
+        var expectedMatchedRow = new string?[] { "1", "1" };
+        var expectedUnmatchedRow = new string?[] { null, "2" };
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().HaveCount(2);
+        result.Rows[0].Should().Equal(expectedMatchedRow);
+        result.Rows[1].Should().Equal(expectedUnmatchedRow);
+    }
+
+    [Fact(DisplayName = "CsvJoinProcessor Process creates cartesian matches for duplicate join keys.")]
+    [Trait("Category", "Unit")]
+    public void ProcessCreatesCartesianMatchesForDuplicateJoinKeys()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, [new SelectColumn("left", "Value", "LeftValue"), new SelectColumn("right", "Value", "RightValue")]);
+        var left = BuildDataSet("left", ["Id", "Value"], [["1", "L1"], ["1", "L2"]]);
+        var right = BuildDataSet("right", ["Id", "Value"], [["1", "R1"], ["1", "R2"]]);
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().HaveCount(4);
+        result.Rows[0].Should().Equal("L1", "R1");
+        result.Rows[1].Should().Equal("L1", "R2");
+        result.Rows[2].Should().Equal("L2", "R1");
+        result.Rows[3].Should().Equal("L2", "R2");
+    }
+
+    [Fact(DisplayName = "CsvJoinProcessor Process throws when selected column is missing.")]
+    [Trait("Category", "Unit")]
+    public void ProcessThrowsWhenSelectedColumnIsMissing()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, [new SelectColumn("left", "Missing", "Missing")]);
+        var left = BuildDataSet("left", ["Id"], [["1"]]);
+        var right = BuildDataSet("right", ["Id"], [["1"]]);
+
+        // Act
+        Action action = () => _ = sut.Process(query, left, right);
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Missing*");
+    }
+
+    [Fact(DisplayName = "CsvJoinProcessor Process throws when selected source alias is unknown.")]
+    [Trait("Category", "Unit")]
+    public void ProcessThrowsWhenSelectedSourceAliasIsUnknown()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, [new SelectColumn("third", "Id", "Id")]);
+        var left = BuildDataSet("left", ["Id"], [["1"]]);
+        var right = BuildDataSet("right", ["Id"], [["1"]]);
+
+        // Act
+        Action action = () => _ = sut.Process(query, left, right);
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*unknown source alias*");
+    }
+
     private static CsvDataSet BuildDataSet(string alias, IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<string>> rows)
     {
         var mappedRows = rows

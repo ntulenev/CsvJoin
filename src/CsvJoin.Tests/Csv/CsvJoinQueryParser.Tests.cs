@@ -72,4 +72,64 @@ public class CsvJoinQueryParserTests
         action.Should().Throw<FormatException>()
             .WithMessage("*Wildcard selections cannot use AS aliases*");
     }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when join clause uses same alias on both sides.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenJoinClauseUsesSameAliasOnBothSides()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT left.Id FROM left INNER JOIN right ON left.Id = left.OtherId");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*both source aliases*");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when join clause references unknown alias.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenJoinClauseReferencesUnknownAlias()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT left.Id FROM left INNER JOIN right ON third.Id = right.Id");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*not declared*");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when wildcard is used in join clause.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenWildcardIsUsedInJoinClause()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT left.Id FROM left INNER JOIN right ON left.* = right.Id");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*Wildcard is not allowed in JOIN ON clause*");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when select contains empty expression.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenSelectContainsEmptyExpression()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT left.Id, , right.Id FROM left INNER JOIN right ON left.Id = right.Id");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*empty column expression*");
+    }
 }
