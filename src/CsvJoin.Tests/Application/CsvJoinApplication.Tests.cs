@@ -385,6 +385,59 @@ public class CsvJoinApplicationTests
         resultCode.Should().Be(0);
     }
 
+    [Fact(DisplayName = "RunAsync throws when cancellation is requested before writing output file.")]
+    [Trait("Category", "Unit")]
+    public async Task RunAsyncThrowsWhenCancellationIsRequestedBeforeWritingOutputFile()
+    {
+        // Arrange
+        var settings = CreateSettings(openResultAfterBuild: false);
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, CreateSelectColumns());
+        var leftDataSet = CreateDataSet("left", settings.Sources["left"].FilePath);
+        var rightDataSet = CreateDataSet("right", settings.Sources["right"].FilePath);
+        var joinResult = new CsvJoinResult(leftDataSet.FilePath, rightDataSet.FilePath, ["Id"], []);
+        using var cancellationSource = new CancellationTokenSource();
+
+        var queryParserMock = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict);
+        queryParserMock.Setup(x => x.Parse(settings.Query)).Returns(query);
+
+        var csvFileReaderMock = new Mock<ICsvFileReader>(MockBehavior.Strict);
+        csvFileReaderMock.Setup(x => x.ReadAsync("left", settings.Sources["left"], It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync("right", settings.Sources["right"], It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
+
+        var csvJoinProcessorMock = new Mock<ICsvJoinProcessor>(MockBehavior.Strict);
+        csvJoinProcessorMock
+            .Setup(x => x.Process(query, leftDataSet, rightDataSet))
+            .Callback(() => cancellationSource.Cancel())
+            .Returns(joinResult);
+
+        var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
+        consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, query));
+        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, settings.Output.ConsoleMaxRows));
+
+        var resultFileWriterMock = new Mock<IResultFileWriter>(MockBehavior.Strict);
+        resultFileWriterMock
+            .Setup(x => x.WriteAsync(joinResult, settings, It.IsAny<CancellationToken>()))
+            .Returns<CsvJoinResult, AppSettings, CancellationToken>((_, _, cancellationToken) =>
+                Task.FromCanceled<JoinOutputFile>(cancellationToken));
+
+        var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
+
+        var sut = new CsvJoinApplication(
+            queryParserMock.Object,
+            csvFileReaderMock.Object,
+            csvJoinProcessorMock.Object,
+            consoleOutputRendererMock.Object,
+            resultFileWriterMock.Object,
+            resultFileLauncherMock.Object,
+            Options.Create(settings));
+
+        // Act
+        Func<Task> action = () => sut.RunAsync(cancellationSource.Token);
+
+        // Assert
+        await action.Should().ThrowAsync<OperationCanceledException>();
+    }
+
     private static IOptions<AppSettings> CreateOptions() => Options.Create(CreateSettings(openResultAfterBuild: false));
 
     private static AppSettings CreateSettings(bool openResultAfterBuild)
