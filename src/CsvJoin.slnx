@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CsvJoin.Tests/CsvJoin.Tests.csproj" />
+  <Project Path="CsvJoin/CsvJoin.csproj" />
+</Solution>
