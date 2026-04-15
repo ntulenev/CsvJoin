@@ -9,8 +9,12 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Csv;
 
+/// <summary>
+/// Reads CSV files into <see cref="CsvDataSet"/> instances.
+/// </summary>
 internal sealed class CsvFileReader : ICsvFileReader
 {
+    /// <inheritdoc />
     public async Task<CsvDataSet> ReadAsync(string alias, CsvSourceOptions source, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(alias);

@@ -8,8 +8,12 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Presentation.Files;
 
+/// <summary>
+/// Writes join results to CSV files.
+/// </summary>
 internal sealed class CsvResultFileWriter : IResultFileWriter
 {
+    /// <inheritdoc />
     public async Task<JoinOutputFile> WriteAsync(
         CsvJoinResult result,
         JoinOutputSettings output,

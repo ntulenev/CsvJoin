@@ -2,8 +2,16 @@ using System.Text;
 
 namespace CsvJoin.Csv;
 
+/// <summary>
+/// Splits a SELECT clause into individual projection expressions.
+/// </summary>
 internal static class SelectClauseTokenizer
 {
+    /// <summary>
+    /// Splits a SELECT clause while respecting brackets, string literals, and function calls.
+    /// </summary>
+    /// <param name="input">The raw SELECT clause content.</param>
+    /// <returns>The parsed projection expressions.</returns>
     public static IReadOnlyList<string> Split(string input)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(input);

@@ -5,8 +5,12 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Presentation.Console;
 
+/// <summary>
+/// Renders execution details and results with Spectre.Console.
+/// </summary>
 internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
 {
+    /// <inheritdoc />
     public void RenderHeader(ConfiguredJoinJob job)
     {
         ArgumentNullException.ThrowIfNull(job);
@@ -20,6 +24,7 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
         AnsiConsole.WriteLine();
     }
 
+    /// <inheritdoc />
     public void RenderResult(CsvJoinResult result, int consoleMaxRows)
     {
         ArgumentNullException.ThrowIfNull(result);
@@ -66,18 +71,21 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
         AnsiConsole.WriteLine();
     }
 
+    /// <inheritdoc />
     public void PrintFileSaved(JoinOutputFile outputFile)
     {
         ArgumentNullException.ThrowIfNull(outputFile);
         AnsiConsole.MarkupLine($"[green]Result file saved:[/] [silver]{Markup.Escape(outputFile.FilePath)}[/]");
     }
 
+    /// <inheritdoc />
     public void PrintFileOpened(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         AnsiConsole.MarkupLine($"[grey]Opened result file:[/] [silver]{Markup.Escape(filePath)}[/]");
     }
 
+    /// <inheritdoc />
     public void PrintFileOpenWarning(string message)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(message);

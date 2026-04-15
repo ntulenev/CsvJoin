@@ -5,16 +5,24 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Application;
 
+/// <summary>
+/// Builds configured join jobs from application settings.
+/// </summary>
 internal sealed class ConfiguredJoinJobFactory : IConfiguredJoinJobFactory
 {
     private readonly ICsvJoinQueryParser _queryParser;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConfiguredJoinJobFactory"/> class.
+    /// </summary>
+    /// <param name="queryParser">The parser used to translate the query text.</param>
     public ConfiguredJoinJobFactory(ICsvJoinQueryParser queryParser)
     {
         ArgumentNullException.ThrowIfNull(queryParser);
         _queryParser = queryParser;
     }
 
+    /// <inheritdoc />
     public ConfiguredJoinJob Create(AppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);

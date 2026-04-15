@@ -7,6 +7,9 @@ using CsvJoin.Configuration;
 
 namespace CsvJoin.Application;
 
+/// <summary>
+/// Orchestrates the end-to-end CSV join workflow.
+/// </summary>
 internal sealed class CsvJoinApplication : ICsvJoinApplication
 {
     private readonly IConfiguredJoinJobFactory _configuredJoinJobFactory;
@@ -17,6 +20,16 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
     private readonly IResultFileLauncher _resultFileLauncher;
     private readonly AppSettings _settings;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CsvJoinApplication"/> class.
+    /// </summary>
+    /// <param name="configuredJoinJobFactory">The factory that creates executable join jobs.</param>
+    /// <param name="csvFileReader">The CSV reader.</param>
+    /// <param name="csvJoinProcessor">The join processor.</param>
+    /// <param name="consoleOutputRenderer">The console renderer.</param>
+    /// <param name="resultFileWriter">The result file writer.</param>
+    /// <param name="resultFileLauncher">The shell file launcher.</param>
+    /// <param name="options">The application settings.</param>
     public CsvJoinApplication(
         IConfiguredJoinJobFactory configuredJoinJobFactory,
         ICsvFileReader csvFileReader,
@@ -43,6 +56,7 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
         _settings = options.Value;
     }
 
+    /// <inheritdoc />
     public async Task<int> RunAsync(CancellationToken cancellationToken)
     {
         var job = _configuredJoinJobFactory.Create(_settings);

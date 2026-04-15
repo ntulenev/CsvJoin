@@ -13,8 +13,15 @@ using CsvJoin.Presentation.Files;
 
 namespace CsvJoin;
 
+/// <summary>
+/// Registers configuration and services for the CSV join application.
+/// </summary>
 internal static class CsvJoinCompositionRoot
 {
+    /// <summary>
+    /// Adds configuration sources required by the application.
+    /// </summary>
+    /// <param name="configurationBuilder">The configuration builder to configure.</param>
     public static void ConfigureConfiguration(IConfigurationBuilder configurationBuilder)
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
@@ -22,6 +29,12 @@ internal static class CsvJoinCompositionRoot
         configurationBuilder.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
     }
 
+    /// <summary>
+    /// Registers the application's runtime services.
+    /// </summary>
+    /// <param name="services">The service collection to populate.</param>
+    /// <param name="configuration">The application configuration.</param>
+    /// <returns>The same service collection for chaining.</returns>
     public static IServiceCollection AddCsvJoinServices(IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);

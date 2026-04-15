@@ -4,10 +4,18 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Csv;
 
+/// <summary>
+/// Parses individual SELECT projections.
+/// </summary>
 internal static partial class SelectProjectionParser
 {
     private const string CoalesceFunctionName = "COALESCE";
 
+    /// <summary>
+    /// Parses a single projection expression.
+    /// </summary>
+    /// <param name="item">The projection text.</param>
+    /// <returns>The parsed select column.</returns>
     public static SelectColumn Parse(string item)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(item);
@@ -29,6 +37,12 @@ internal static partial class SelectProjectionParser
             projection.DefaultValue);
     }
 
+    /// <summary>
+    /// Parses a field reference in the form <c>alias.Column</c> or <c>alias.[Column Name]</c>.
+    /// </summary>
+    /// <param name="expression">The field reference text.</param>
+    /// <param name="allowWildcard">Indicates whether <c>*</c> is allowed as field reference.</param>
+    /// <returns>The parsed field reference parts.</returns>
     public static (string SourceAlias, string SourceField, bool IsWildcard) ParseFieldReference(string expression, bool allowWildcard)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(expression);

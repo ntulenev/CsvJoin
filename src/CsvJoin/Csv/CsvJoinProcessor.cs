@@ -3,8 +3,12 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Csv;
 
+/// <summary>
+/// Executes join queries against loaded CSV datasets.
+/// </summary>
 internal sealed class CsvJoinProcessor : ICsvJoinProcessor
 {
+    /// <inheritdoc />
     public CsvJoinResult Process(CsvJoinQuery query, CsvDataSet left, CsvDataSet right)
     {
         ArgumentNullException.ThrowIfNull(query);

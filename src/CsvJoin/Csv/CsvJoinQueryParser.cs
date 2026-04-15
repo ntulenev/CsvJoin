@@ -5,10 +5,14 @@ using CsvJoin.Models;
 
 namespace CsvJoin.Csv;
 
+/// <summary>
+/// Parses SQL-like join queries into <see cref="CsvJoinQuery"/> instances.
+/// </summary>
 internal sealed partial class CsvJoinQueryParser : ICsvJoinQueryParser
 {
     private static readonly StringComparer AliasComparer = StringComparer.OrdinalIgnoreCase;
 
+    /// <inheritdoc />
     public CsvJoinQuery Parse(string queryText)
     {
         if (string.IsNullOrWhiteSpace(queryText))
@@ -78,5 +82,4 @@ internal sealed partial class CsvJoinQueryParser : ICsvJoinQueryParser
         "^SELECT\\s+(?<select>.+?)\\s+FROM\\s+(?<leftAlias>[A-Za-z_][A-Za-z0-9_]*)\\s+(?<joinType>INNER|LEFT|RIGHT|FULL)\\s+JOIN\\s+(?<rightAlias>[A-Za-z_][A-Za-z0-9_]*)\\s+ON\\s+(?<leftRef>.+?)\\s*=\\s*(?<rightRef>.+?)$",
         RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex QueryPattern();
-
 }
