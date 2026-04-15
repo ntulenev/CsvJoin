@@ -4,7 +4,6 @@ using CsvHelper;
 using CsvHelper.Configuration;
 
 using CsvJoin.Abstractions.Presentation;
-using CsvJoin.Configuration;
 using CsvJoin.Models;
 
 namespace CsvJoin.Presentation.Files;
@@ -13,13 +12,13 @@ internal sealed class CsvResultFileWriter : IResultFileWriter
 {
     public async Task<JoinOutputFile> WriteAsync(
         CsvJoinResult result,
-        AppSettings settings,
+        JoinOutputSettings output,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(result);
-        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(output);
 
-        var resultsDirectory = Path.GetFullPath(settings.Output.ResultsDirectory);
+        var resultsDirectory = Path.GetFullPath(output.ResultsDirectory);
         Directory.CreateDirectory(resultsDirectory);
 
         var leftName = Path.GetFileNameWithoutExtension(result.LeftFilePath);
@@ -29,7 +28,7 @@ internal sealed class CsvResultFileWriter : IResultFileWriter
 
         var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
-            Delimiter = settings.Output.Delimiter,
+            Delimiter = output.Delimiter,
             HasHeaderRecord = true,
         };
 

@@ -4,6 +4,7 @@ using Moq;
 
 using Microsoft.Extensions.Options;
 
+using CsvJoin.Abstractions.Application;
 using CsvJoin.Abstractions.Csv;
 using CsvJoin.Abstractions.Presentation;
 using CsvJoin.Application;
@@ -19,7 +20,7 @@ public class CsvJoinApplicationTests
     public void CsvJoinApplicationCanBeCreated()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
         var csvJoinProcessor = new Mock<ICsvJoinProcessor>(MockBehavior.Strict).Object;
         var consoleOutputRenderer = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict).Object;
@@ -28,7 +29,7 @@ public class CsvJoinApplicationTests
 
         // Act
         var exception = Record.Exception(() => new CsvJoinApplication(
-            queryParser,
+            configuredJoinJobFactory,
             csvFileReader,
             csvJoinProcessor,
             consoleOutputRenderer,
@@ -40,9 +41,9 @@ public class CsvJoinApplicationTests
         exception.Should().BeNull();
     }
 
-    [Fact(DisplayName = "CsvJoinApplication constructor throws when query parser is null.")]
+    [Fact(DisplayName = "CsvJoinApplication constructor throws when configured join job factory is null.")]
     [Trait("Category", "Unit")]
-    public void ConstructorThrowsWhenQueryParserIsNull()
+    public void ConstructorThrowsWhenConfiguredJoinJobFactoryIsNull()
     {
         // Arrange
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
@@ -55,7 +56,7 @@ public class CsvJoinApplicationTests
         Action action = () => _ = new CsvJoinApplication(null!, csvFileReader, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, resultFileLauncher, CreateOptions());
 
         // Assert
-        action.Should().Throw<ArgumentNullException>().WithParameterName("queryParser");
+        action.Should().Throw<ArgumentNullException>().WithParameterName("configuredJoinJobFactory");
     }
 
     [Fact(DisplayName = "CsvJoinApplication constructor throws when csv file reader is null.")]
@@ -63,14 +64,14 @@ public class CsvJoinApplicationTests
     public void ConstructorThrowsWhenCsvFileReaderIsNull()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvJoinProcessor = new Mock<ICsvJoinProcessor>(MockBehavior.Strict).Object;
         var consoleOutputRenderer = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict).Object;
         var resultFileWriter = new Mock<IResultFileWriter>(MockBehavior.Strict).Object;
         var resultFileLauncher = new Mock<IResultFileLauncher>(MockBehavior.Strict).Object;
 
         // Act
-        Action action = () => _ = new CsvJoinApplication(queryParser, null!, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, resultFileLauncher, CreateOptions());
+        Action action = () => _ = new CsvJoinApplication(configuredJoinJobFactory, null!, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, resultFileLauncher, CreateOptions());
 
         // Assert
         action.Should().Throw<ArgumentNullException>().WithParameterName("csvFileReader");
@@ -81,14 +82,14 @@ public class CsvJoinApplicationTests
     public void ConstructorThrowsWhenCsvJoinProcessorIsNull()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
         var consoleOutputRenderer = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict).Object;
         var resultFileWriter = new Mock<IResultFileWriter>(MockBehavior.Strict).Object;
         var resultFileLauncher = new Mock<IResultFileLauncher>(MockBehavior.Strict).Object;
 
         // Act
-        Action action = () => _ = new CsvJoinApplication(queryParser, csvFileReader, null!, consoleOutputRenderer, resultFileWriter, resultFileLauncher, CreateOptions());
+        Action action = () => _ = new CsvJoinApplication(configuredJoinJobFactory, csvFileReader, null!, consoleOutputRenderer, resultFileWriter, resultFileLauncher, CreateOptions());
 
         // Assert
         action.Should().Throw<ArgumentNullException>().WithParameterName("csvJoinProcessor");
@@ -99,14 +100,14 @@ public class CsvJoinApplicationTests
     public void ConstructorThrowsWhenConsoleOutputRendererIsNull()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
         var csvJoinProcessor = new Mock<ICsvJoinProcessor>(MockBehavior.Strict).Object;
         var resultFileWriter = new Mock<IResultFileWriter>(MockBehavior.Strict).Object;
         var resultFileLauncher = new Mock<IResultFileLauncher>(MockBehavior.Strict).Object;
 
         // Act
-        Action action = () => _ = new CsvJoinApplication(queryParser, csvFileReader, csvJoinProcessor, null!, resultFileWriter, resultFileLauncher, CreateOptions());
+        Action action = () => _ = new CsvJoinApplication(configuredJoinJobFactory, csvFileReader, csvJoinProcessor, null!, resultFileWriter, resultFileLauncher, CreateOptions());
 
         // Assert
         action.Should().Throw<ArgumentNullException>().WithParameterName("consoleOutputRenderer");
@@ -117,14 +118,14 @@ public class CsvJoinApplicationTests
     public void ConstructorThrowsWhenResultFileWriterIsNull()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
         var csvJoinProcessor = new Mock<ICsvJoinProcessor>(MockBehavior.Strict).Object;
         var consoleOutputRenderer = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict).Object;
         var resultFileLauncher = new Mock<IResultFileLauncher>(MockBehavior.Strict).Object;
 
         // Act
-        Action action = () => _ = new CsvJoinApplication(queryParser, csvFileReader, csvJoinProcessor, consoleOutputRenderer, null!, resultFileLauncher, CreateOptions());
+        Action action = () => _ = new CsvJoinApplication(configuredJoinJobFactory, csvFileReader, csvJoinProcessor, consoleOutputRenderer, null!, resultFileLauncher, CreateOptions());
 
         // Assert
         action.Should().Throw<ArgumentNullException>().WithParameterName("resultFileWriter");
@@ -135,14 +136,14 @@ public class CsvJoinApplicationTests
     public void ConstructorThrowsWhenResultFileLauncherIsNull()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
         var csvJoinProcessor = new Mock<ICsvJoinProcessor>(MockBehavior.Strict).Object;
         var consoleOutputRenderer = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict).Object;
         var resultFileWriter = new Mock<IResultFileWriter>(MockBehavior.Strict).Object;
 
         // Act
-        Action action = () => _ = new CsvJoinApplication(queryParser, csvFileReader, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, null!, CreateOptions());
+        Action action = () => _ = new CsvJoinApplication(configuredJoinJobFactory, csvFileReader, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, null!, CreateOptions());
 
         // Assert
         action.Should().Throw<ArgumentNullException>().WithParameterName("resultFileLauncher");
@@ -153,7 +154,7 @@ public class CsvJoinApplicationTests
     public void ConstructorThrowsWhenOptionsAreNull()
     {
         // Arrange
-        var queryParser = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict).Object;
+        var configuredJoinJobFactory = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict).Object;
         var csvFileReader = new Mock<ICsvFileReader>(MockBehavior.Strict).Object;
         var csvJoinProcessor = new Mock<ICsvJoinProcessor>(MockBehavior.Strict).Object;
         var consoleOutputRenderer = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict).Object;
@@ -161,7 +162,7 @@ public class CsvJoinApplicationTests
         var resultFileLauncher = new Mock<IResultFileLauncher>(MockBehavior.Strict).Object;
 
         // Act
-        Action action = () => _ = new CsvJoinApplication(queryParser, csvFileReader, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, resultFileLauncher, null!);
+        Action action = () => _ = new CsvJoinApplication(configuredJoinJobFactory, csvFileReader, csvJoinProcessor, consoleOutputRenderer, resultFileWriter, resultFileLauncher, null!);
 
         // Assert
         action.Should().Throw<ArgumentNullException>().WithParameterName("options");
@@ -174,31 +175,32 @@ public class CsvJoinApplicationTests
         // Arrange
         var settings = CreateSettings(openResultAfterBuild: true);
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Left, CreateSelectColumns());
-        var leftDataSet = CreateDataSet("left", settings.Sources["left"].FilePath);
-        var rightDataSet = CreateDataSet("right", settings.Sources["right"].FilePath);
+        var job = CreateJob(settings, query);
+        var leftDataSet = CreateDataSet("left", job.LeftSource.FilePath);
+        var rightDataSet = CreateDataSet("right", job.RightSource.FilePath);
         var resultHeaders = new[] { "Id", "Status" };
         var resultRows = new[] { (IReadOnlyList<string?>)new string?[] { "1", "Active" } };
         var result = new CsvJoinResult(leftDataSet.FilePath, rightDataSet.FilePath, resultHeaders, resultRows);
         var outputFile = new JoinOutputFile("joined.csv", 1);
 
-        var queryParserMock = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict);
-        queryParserMock.Setup(x => x.Parse(settings.Query)).Returns(query);
+        var configuredJoinJobFactoryMock = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict);
+        configuredJoinJobFactoryMock.Setup(x => x.Create(settings)).Returns(job);
 
         var csvFileReaderMock = new Mock<ICsvFileReader>(MockBehavior.Strict);
-        csvFileReaderMock.Setup(x => x.ReadAsync("left", settings.Sources["left"], It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
-        csvFileReaderMock.Setup(x => x.ReadAsync("right", settings.Sources["right"], It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.RightSource.Alias, job.RightSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
 
         var csvJoinProcessorMock = new Mock<ICsvJoinProcessor>(MockBehavior.Strict);
         csvJoinProcessorMock.Setup(x => x.Process(query, leftDataSet, rightDataSet)).Returns(result);
 
         var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
-        consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, query));
-        consoleOutputRendererMock.Setup(x => x.RenderResult(result, settings.Output.ConsoleMaxRows));
+        consoleOutputRendererMock.Setup(x => x.RenderHeader(job));
+        consoleOutputRendererMock.Setup(x => x.RenderResult(result, job.Output.ConsoleMaxRows));
         consoleOutputRendererMock.Setup(x => x.PrintFileSaved(outputFile));
         consoleOutputRendererMock.Setup(x => x.PrintFileOpened(outputFile.FilePath));
 
         var resultFileWriterMock = new Mock<IResultFileWriter>(MockBehavior.Strict);
-        resultFileWriterMock.Setup(x => x.WriteAsync(result, settings, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
+        resultFileWriterMock.Setup(x => x.WriteAsync(result, job.Output, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
 
         var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
         resultFileLauncherMock
@@ -210,7 +212,7 @@ public class CsvJoinApplicationTests
             });
 
         var sut = new CsvJoinApplication(
-            queryParserMock.Object,
+            configuredJoinJobFactoryMock.Object,
             csvFileReaderMock.Object,
             csvJoinProcessorMock.Object,
             consoleOutputRendererMock.Object,
@@ -232,30 +234,31 @@ public class CsvJoinApplicationTests
         // Arrange
         var settings = CreateSettings(openResultAfterBuild: true);
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, CreateSelectColumns());
-        var leftDataSet = CreateDataSet("left", settings.Sources["left"].FilePath);
-        var rightDataSet = CreateDataSet("right", settings.Sources["right"].FilePath);
+        var job = CreateJob(settings, query);
+        var leftDataSet = CreateDataSet("left", job.LeftSource.FilePath);
+        var rightDataSet = CreateDataSet("right", job.RightSource.FilePath);
         var joinResult = new CsvJoinResult(leftDataSet.FilePath, rightDataSet.FilePath, ["Id"], []);
         var outputFile = new JoinOutputFile("joined.csv", 0);
         const string expectedError = "Open failed";
 
-        var queryParserMock = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict);
-        queryParserMock.Setup(x => x.Parse(settings.Query)).Returns(query);
+        var configuredJoinJobFactoryMock = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict);
+        configuredJoinJobFactoryMock.Setup(x => x.Create(settings)).Returns(job);
 
         var csvFileReaderMock = new Mock<ICsvFileReader>(MockBehavior.Strict);
-        csvFileReaderMock.Setup(x => x.ReadAsync("left", settings.Sources["left"], It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
-        csvFileReaderMock.Setup(x => x.ReadAsync("right", settings.Sources["right"], It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.RightSource.Alias, job.RightSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
 
         var csvJoinProcessorMock = new Mock<ICsvJoinProcessor>(MockBehavior.Strict);
         csvJoinProcessorMock.Setup(x => x.Process(query, leftDataSet, rightDataSet)).Returns(joinResult);
 
         var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
-        consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, query));
-        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, settings.Output.ConsoleMaxRows));
+        consoleOutputRendererMock.Setup(x => x.RenderHeader(job));
+        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, job.Output.ConsoleMaxRows));
         consoleOutputRendererMock.Setup(x => x.PrintFileSaved(outputFile));
         consoleOutputRendererMock.Setup(x => x.PrintFileOpenWarning(expectedError));
 
         var resultFileWriterMock = new Mock<IResultFileWriter>(MockBehavior.Strict);
-        resultFileWriterMock.Setup(x => x.WriteAsync(joinResult, settings, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
+        resultFileWriterMock.Setup(x => x.WriteAsync(joinResult, job.Output, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
 
         var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
         resultFileLauncherMock
@@ -267,7 +270,7 @@ public class CsvJoinApplicationTests
             });
 
         var sut = new CsvJoinApplication(
-            queryParserMock.Object,
+            configuredJoinJobFactoryMock.Object,
             csvFileReaderMock.Object,
             csvJoinProcessorMock.Object,
             consoleOutputRendererMock.Object,
@@ -289,33 +292,34 @@ public class CsvJoinApplicationTests
         // Arrange
         var settings = CreateSettings(openResultAfterBuild: false);
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, CreateSelectColumns());
-        var leftDataSet = CreateDataSet("left", settings.Sources["left"].FilePath);
-        var rightDataSet = CreateDataSet("right", settings.Sources["right"].FilePath);
+        var job = CreateJob(settings, query);
+        var leftDataSet = CreateDataSet("left", job.LeftSource.FilePath);
+        var rightDataSet = CreateDataSet("right", job.RightSource.FilePath);
         var joinResult = new CsvJoinResult(leftDataSet.FilePath, rightDataSet.FilePath, ["Id"], []);
         var outputFile = new JoinOutputFile("joined.csv", 0);
 
-        var queryParserMock = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict);
-        queryParserMock.Setup(x => x.Parse(settings.Query)).Returns(query);
+        var configuredJoinJobFactoryMock = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict);
+        configuredJoinJobFactoryMock.Setup(x => x.Create(settings)).Returns(job);
 
         var csvFileReaderMock = new Mock<ICsvFileReader>(MockBehavior.Strict);
-        csvFileReaderMock.Setup(x => x.ReadAsync("left", settings.Sources["left"], It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
-        csvFileReaderMock.Setup(x => x.ReadAsync("right", settings.Sources["right"], It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.RightSource.Alias, job.RightSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
 
         var csvJoinProcessorMock = new Mock<ICsvJoinProcessor>(MockBehavior.Strict);
         csvJoinProcessorMock.Setup(x => x.Process(query, leftDataSet, rightDataSet)).Returns(joinResult);
 
         var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
-        consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, query));
-        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, settings.Output.ConsoleMaxRows));
+        consoleOutputRendererMock.Setup(x => x.RenderHeader(job));
+        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, job.Output.ConsoleMaxRows));
         consoleOutputRendererMock.Setup(x => x.PrintFileSaved(outputFile));
 
         var resultFileWriterMock = new Mock<IResultFileWriter>(MockBehavior.Strict);
-        resultFileWriterMock.Setup(x => x.WriteAsync(joinResult, settings, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
+        resultFileWriterMock.Setup(x => x.WriteAsync(joinResult, job.Output, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
 
         var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
 
         var sut = new CsvJoinApplication(
-            queryParserMock.Object,
+            configuredJoinJobFactoryMock.Object,
             csvFileReaderMock.Object,
             csvJoinProcessorMock.Object,
             consoleOutputRendererMock.Object,
@@ -337,28 +341,29 @@ public class CsvJoinApplicationTests
         // Arrange
         var settings = CreateSettings(openResultAfterBuild: true);
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, CreateSelectColumns());
-        var leftDataSet = CreateDataSet("left", settings.Sources["left"].FilePath);
-        var rightDataSet = CreateDataSet("right", settings.Sources["right"].FilePath);
+        var job = CreateJob(settings, query);
+        var leftDataSet = CreateDataSet("left", job.LeftSource.FilePath);
+        var rightDataSet = CreateDataSet("right", job.RightSource.FilePath);
         var joinResult = new CsvJoinResult(leftDataSet.FilePath, rightDataSet.FilePath, ["Id"], []);
         var outputFile = new JoinOutputFile("joined.csv", 0);
 
-        var queryParserMock = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict);
-        queryParserMock.Setup(x => x.Parse(settings.Query)).Returns(query);
+        var configuredJoinJobFactoryMock = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict);
+        configuredJoinJobFactoryMock.Setup(x => x.Create(settings)).Returns(job);
 
         var csvFileReaderMock = new Mock<ICsvFileReader>(MockBehavior.Strict);
-        csvFileReaderMock.Setup(x => x.ReadAsync("left", settings.Sources["left"], It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
-        csvFileReaderMock.Setup(x => x.ReadAsync("right", settings.Sources["right"], It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.RightSource.Alias, job.RightSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
 
         var csvJoinProcessorMock = new Mock<ICsvJoinProcessor>(MockBehavior.Strict);
         csvJoinProcessorMock.Setup(x => x.Process(query, leftDataSet, rightDataSet)).Returns(joinResult);
 
         var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
-        consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, query));
-        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, settings.Output.ConsoleMaxRows));
+        consoleOutputRendererMock.Setup(x => x.RenderHeader(job));
+        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, job.Output.ConsoleMaxRows));
         consoleOutputRendererMock.Setup(x => x.PrintFileSaved(outputFile));
 
         var resultFileWriterMock = new Mock<IResultFileWriter>(MockBehavior.Strict);
-        resultFileWriterMock.Setup(x => x.WriteAsync(joinResult, settings, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
+        resultFileWriterMock.Setup(x => x.WriteAsync(joinResult, job.Output, It.IsAny<CancellationToken>())).ReturnsAsync(outputFile);
 
         var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
         resultFileLauncherMock
@@ -370,7 +375,7 @@ public class CsvJoinApplicationTests
             });
 
         var sut = new CsvJoinApplication(
-            queryParserMock.Object,
+            configuredJoinJobFactoryMock.Object,
             csvFileReaderMock.Object,
             csvJoinProcessorMock.Object,
             consoleOutputRendererMock.Object,
@@ -392,17 +397,18 @@ public class CsvJoinApplicationTests
         // Arrange
         var settings = CreateSettings(openResultAfterBuild: false);
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, CreateSelectColumns());
-        var leftDataSet = CreateDataSet("left", settings.Sources["left"].FilePath);
-        var rightDataSet = CreateDataSet("right", settings.Sources["right"].FilePath);
+        var job = CreateJob(settings, query);
+        var leftDataSet = CreateDataSet("left", job.LeftSource.FilePath);
+        var rightDataSet = CreateDataSet("right", job.RightSource.FilePath);
         var joinResult = new CsvJoinResult(leftDataSet.FilePath, rightDataSet.FilePath, ["Id"], []);
         using var cancellationSource = new CancellationTokenSource();
 
-        var queryParserMock = new Mock<ICsvJoinQueryParser>(MockBehavior.Strict);
-        queryParserMock.Setup(x => x.Parse(settings.Query)).Returns(query);
+        var configuredJoinJobFactoryMock = new Mock<IConfiguredJoinJobFactory>(MockBehavior.Strict);
+        configuredJoinJobFactoryMock.Setup(x => x.Create(settings)).Returns(job);
 
         var csvFileReaderMock = new Mock<ICsvFileReader>(MockBehavior.Strict);
-        csvFileReaderMock.Setup(x => x.ReadAsync("left", settings.Sources["left"], It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
-        csvFileReaderMock.Setup(x => x.ReadAsync("right", settings.Sources["right"], It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(leftDataSet);
+        csvFileReaderMock.Setup(x => x.ReadAsync(job.RightSource.Alias, job.RightSource.Options, It.IsAny<CancellationToken>())).ReturnsAsync(rightDataSet);
 
         var csvJoinProcessorMock = new Mock<ICsvJoinProcessor>(MockBehavior.Strict);
         csvJoinProcessorMock
@@ -411,19 +417,19 @@ public class CsvJoinApplicationTests
             .Returns(joinResult);
 
         var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
-        consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, query));
-        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, settings.Output.ConsoleMaxRows));
+        consoleOutputRendererMock.Setup(x => x.RenderHeader(job));
+        consoleOutputRendererMock.Setup(x => x.RenderResult(joinResult, job.Output.ConsoleMaxRows));
 
         var resultFileWriterMock = new Mock<IResultFileWriter>(MockBehavior.Strict);
         resultFileWriterMock
-            .Setup(x => x.WriteAsync(joinResult, settings, It.IsAny<CancellationToken>()))
-            .Returns<CsvJoinResult, AppSettings, CancellationToken>((_, _, cancellationToken) =>
+            .Setup(x => x.WriteAsync(joinResult, job.Output, It.IsAny<CancellationToken>()))
+            .Returns<CsvJoinResult, JoinOutputSettings, CancellationToken>((_, _, cancellationToken) =>
                 Task.FromCanceled<JoinOutputFile>(cancellationToken));
 
         var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
 
         var sut = new CsvJoinApplication(
-            queryParserMock.Object,
+            configuredJoinJobFactoryMock.Object,
             csvFileReaderMock.Object,
             csvJoinProcessorMock.Object,
             consoleOutputRendererMock.Object,
@@ -458,6 +464,19 @@ public class CsvJoinApplicationTests
                 Delimiter = ",",
             },
         };
+    }
+
+    private static ConfiguredJoinJob CreateJob(AppSettings settings, CsvJoinQuery query)
+    {
+        return new ConfiguredJoinJob(
+            query,
+            new ConfiguredCsvSource(query.LeftAlias, settings.Sources[query.LeftAlias]),
+            new ConfiguredCsvSource(query.RightAlias, settings.Sources[query.RightAlias]),
+            new JoinOutputSettings(
+                settings.Output.ResultsDirectory,
+                settings.Output.Delimiter,
+                settings.Output.ConsoleMaxRows,
+                settings.Output.OpenResultAfterBuild));
     }
 
     private static CsvDataSet CreateDataSet(string alias, string filePath)

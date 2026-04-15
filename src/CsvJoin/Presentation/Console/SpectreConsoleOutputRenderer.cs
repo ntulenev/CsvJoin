@@ -1,24 +1,22 @@
 using Spectre.Console;
 
 using CsvJoin.Abstractions.Presentation;
-using CsvJoin.Configuration;
 using CsvJoin.Models;
 
 namespace CsvJoin.Presentation.Console;
 
 internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
 {
-    public void RenderHeader(AppSettings settings, CsvJoinQuery query)
+    public void RenderHeader(ConfiguredJoinJob job)
     {
-        ArgumentNullException.ThrowIfNull(settings);
-        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(job);
 
         AnsiConsole.Write(new Rule("[bold deepskyblue1]CSV Join[/]").RuleStyle("grey").LeftJustified());
-        AnsiConsole.MarkupLine($"[grey]Left source:[/] [silver]{Markup.Escape(settings.Sources[query.LeftAlias].FilePath)}[/]");
-        AnsiConsole.MarkupLine($"[grey]Right source:[/] [silver]{Markup.Escape(settings.Sources[query.RightAlias].FilePath)}[/]");
+        AnsiConsole.MarkupLine($"[grey]Left source:[/] [silver]{Markup.Escape(job.LeftSource.FilePath)}[/]");
+        AnsiConsole.MarkupLine($"[grey]Right source:[/] [silver]{Markup.Escape(job.RightSource.FilePath)}[/]");
         AnsiConsole.MarkupLine(
-            $"[grey]Join:[/] [silver]{Markup.Escape(query.JoinType.ToString().ToUpperInvariant())} on {Markup.Escape(query.LeftAlias)}.{Markup.Escape(query.LeftJoinField)} = {Markup.Escape(query.RightAlias)}.{Markup.Escape(query.RightJoinField)}[/]");
-        AnsiConsole.MarkupLine($"[grey]Output directory:[/] [silver]{Markup.Escape(settings.Output.ResultsDirectory)}[/]");
+            $"[grey]Join:[/] [silver]{Markup.Escape(job.Query.JoinType.ToString().ToUpperInvariant())} on {Markup.Escape(job.Query.LeftAlias)}.{Markup.Escape(job.Query.LeftJoinField)} = {Markup.Escape(job.Query.RightAlias)}.{Markup.Escape(job.Query.RightJoinField)}[/]");
+        AnsiConsole.MarkupLine($"[grey]Output directory:[/] [silver]{Markup.Escape(job.Output.ResultsDirectory)}[/]");
         AnsiConsole.WriteLine();
     }
 

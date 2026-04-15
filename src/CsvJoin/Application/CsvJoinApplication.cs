@@ -9,7 +9,7 @@ namespace CsvJoin.Application;
 
 internal sealed class CsvJoinApplication : ICsvJoinApplication
 {
-    private readonly ICsvJoinQueryParser _queryParser;
+    private readonly IConfiguredJoinJobFactory _configuredJoinJobFactory;
     private readonly ICsvFileReader _csvFileReader;
     private readonly ICsvJoinProcessor _csvJoinProcessor;
     private readonly IConsoleOutputRenderer _consoleOutputRenderer;
@@ -18,7 +18,7 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
     private readonly AppSettings _settings;
 
     public CsvJoinApplication(
-        ICsvJoinQueryParser queryParser,
+        IConfiguredJoinJobFactory configuredJoinJobFactory,
         ICsvFileReader csvFileReader,
         ICsvJoinProcessor csvJoinProcessor,
         IConsoleOutputRenderer consoleOutputRenderer,
@@ -26,7 +26,7 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
         IResultFileLauncher resultFileLauncher,
         IOptions<AppSettings> options)
     {
-        ArgumentNullException.ThrowIfNull(queryParser);
+        ArgumentNullException.ThrowIfNull(configuredJoinJobFactory);
         ArgumentNullException.ThrowIfNull(csvFileReader);
         ArgumentNullException.ThrowIfNull(csvJoinProcessor);
         ArgumentNullException.ThrowIfNull(consoleOutputRenderer);
@@ -34,7 +34,7 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
         ArgumentNullException.ThrowIfNull(resultFileLauncher);
         ArgumentNullException.ThrowIfNull(options);
 
-        _queryParser = queryParser;
+        _configuredJoinJobFactory = configuredJoinJobFactory;
         _csvFileReader = csvFileReader;
         _csvJoinProcessor = csvJoinProcessor;
         _consoleOutputRenderer = consoleOutputRenderer;
@@ -45,24 +45,21 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
 
     public async Task<int> RunAsync(CancellationToken cancellationToken)
     {
-        var query = _queryParser.Parse(_settings.Query);
-        _consoleOutputRenderer.RenderHeader(_settings, query);
+        var job = _configuredJoinJobFactory.Create(_settings);
+        _consoleOutputRenderer.RenderHeader(job);
 
-        var leftSource = ResolveSource(query.LeftAlias);
-        var rightSource = ResolveSource(query.RightAlias);
-
-        var leftTask = _csvFileReader.ReadAsync(query.LeftAlias, leftSource, cancellationToken);
-        var rightTask = _csvFileReader.ReadAsync(query.RightAlias, rightSource, cancellationToken);
+        var leftTask = _csvFileReader.ReadAsync(job.LeftSource.Alias, job.LeftSource.Options, cancellationToken);
+        var rightTask = _csvFileReader.ReadAsync(job.RightSource.Alias, job.RightSource.Options, cancellationToken);
 
         await Task.WhenAll(leftTask, rightTask).ConfigureAwait(false);
 
-        var result = _csvJoinProcessor.Process(query, await leftTask.ConfigureAwait(false), await rightTask.ConfigureAwait(false));
-        _consoleOutputRenderer.RenderResult(result, _settings.Output.ConsoleMaxRows);
+        var result = _csvJoinProcessor.Process(job.Query, await leftTask.ConfigureAwait(false), await rightTask.ConfigureAwait(false));
+        _consoleOutputRenderer.RenderResult(result, job.Output.ConsoleMaxRows);
 
-        var outputFile = await _resultFileWriter.WriteAsync(result, _settings, cancellationToken).ConfigureAwait(false);
+        var outputFile = await _resultFileWriter.WriteAsync(result, job.Output, cancellationToken).ConfigureAwait(false);
         _consoleOutputRenderer.PrintFileSaved(outputFile);
 
-        if (!_settings.Output.OpenResultAfterBuild)
+        if (!job.Output.OpenResultAfterBuild)
         {
             return 0;
         }
@@ -77,15 +74,5 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
         }
 
         return 0;
-    }
-
-    private CsvSourceOptions ResolveSource(string alias)
-    {
-        if (_settings.Sources.TryGetValue(alias, out var source))
-        {
-            return source;
-        }
-
-        throw new InvalidOperationException($"CSV source '{alias}' is missing in configuration.");
     }
 }

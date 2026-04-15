@@ -1,6 +1,5 @@
 using FluentAssertions;
 
-using CsvJoin.Configuration;
 using CsvJoin.Models;
 using CsvJoin.Presentation.Files;
 
@@ -15,16 +14,7 @@ public class CsvResultFileWriterTests
         // Arrange
         using var tempDirectory = new TempDirectory();
         var sut = new CsvResultFileWriter();
-        var settings = new AppSettings
-        {
-            Query = "SELECT left.Id FROM left INNER JOIN right ON left.Id = right.Id",
-            Output = new OutputOptions
-            {
-                ResultsDirectory = tempDirectory.Path,
-                Delimiter = ",",
-                OpenResultAfterBuild = false,
-            },
-        };
+        var output = new JoinOutputSettings(tempDirectory.Path, ",", 10, false);
         var headers = new[] { "Id", "Status" };
         var rows = new[]
         {
@@ -38,7 +28,7 @@ public class CsvResultFileWriterTests
             rows);
 
         // Act
-        var outputFile = await sut.WriteAsync(result, settings, CancellationToken.None);
+        var outputFile = await sut.WriteAsync(result, output, CancellationToken.None);
         var content = await File.ReadAllTextAsync(outputFile.FilePath);
 
         // Assert
@@ -54,18 +44,18 @@ public class CsvResultFileWriterTests
     {
         // Arrange
         var sut = new CsvResultFileWriter();
-        var settings = new AppSettings { Query = "query" };
+        var output = new JoinOutputSettings("results", ",", 10, false);
 
         // Act
-        Func<Task> action = () => sut.WriteAsync(null!, settings, CancellationToken.None);
+        Func<Task> action = () => sut.WriteAsync(null!, output, CancellationToken.None);
 
         // Assert
         await action.Should().ThrowAsync<ArgumentNullException>();
     }
 
-    [Fact(DisplayName = "CsvResultFileWriter WriteAsync throws when settings are null.")]
+    [Fact(DisplayName = "CsvResultFileWriter WriteAsync throws when output settings are null.")]
     [Trait("Category", "Unit")]
-    public async Task WriteAsyncThrowsWhenSettingsAreNull()
+    public async Task WriteAsyncThrowsWhenOutputSettingsAreNull()
     {
         // Arrange
         var sut = new CsvResultFileWriter();
@@ -86,22 +76,13 @@ public class CsvResultFileWriterTests
         // Arrange
         using var tempDirectory = new TempDirectory();
         var sut = new CsvResultFileWriter();
-        var settings = new AppSettings
-        {
-            Query = "query",
-            Output = new OutputOptions
-            {
-                ResultsDirectory = tempDirectory.Path,
-                Delimiter = ";",
-                OpenResultAfterBuild = false,
-            },
-        };
+        var output = new JoinOutputSettings(tempDirectory.Path, ";", 10, false);
         var headers = new[] { "Id", "Status" };
         var rows = new[] { (IReadOnlyList<string?>)new string?[] { "1", "Active" } };
         var result = new CsvJoinResult("left.csv", "right.csv", headers, rows);
 
         // Act
-        var outputFile = await sut.WriteAsync(result, settings, CancellationToken.None);
+        var outputFile = await sut.WriteAsync(result, output, CancellationToken.None);
         var content = await File.ReadAllTextAsync(outputFile.FilePath);
 
         // Assert
@@ -116,20 +97,11 @@ public class CsvResultFileWriterTests
         // Arrange
         using var tempDirectory = new TempDirectory();
         var sut = new CsvResultFileWriter();
-        var settings = new AppSettings
-        {
-            Query = "query",
-            Output = new OutputOptions
-            {
-                ResultsDirectory = tempDirectory.Path,
-                Delimiter = ",",
-                OpenResultAfterBuild = false,
-            },
-        };
+        var output = new JoinOutputSettings(tempDirectory.Path, ",", 10, false);
         var result = new CsvJoinResult("left:source?.csv", "right*source|.csv", ["Id"], []);
 
         // Act
-        var outputFile = await sut.WriteAsync(result, settings, CancellationToken.None);
+        var outputFile = await sut.WriteAsync(result, output, CancellationToken.None);
         var fileName = Path.GetFileName(outputFile.FilePath);
 
         // Assert
@@ -147,16 +119,7 @@ public class CsvResultFileWriterTests
         using var tempDirectory = new TempDirectory();
         using var cancellationSource = new CancellationTokenSource();
         var sut = new CsvResultFileWriter();
-        var settings = new AppSettings
-        {
-            Query = "query",
-            Output = new OutputOptions
-            {
-                ResultsDirectory = tempDirectory.Path,
-                Delimiter = ",",
-                OpenResultAfterBuild = false,
-            },
-        };
+        var output = new JoinOutputSettings(tempDirectory.Path, ",", 10, false);
         var rows = Enumerable.Range(1, 5)
             .Select(index => (IReadOnlyList<string?>)new string?[] { index.ToString(System.Globalization.CultureInfo.InvariantCulture) })
             .ToArray();
@@ -164,7 +127,7 @@ public class CsvResultFileWriterTests
         await cancellationSource.CancelAsync();
 
         // Act
-        Func<Task> action = () => sut.WriteAsync(result, settings, cancellationSource.Token);
+        Func<Task> action = () => sut.WriteAsync(result, output, cancellationSource.Token);
 
         // Assert
         await action.Should().ThrowAsync<OperationCanceledException>();

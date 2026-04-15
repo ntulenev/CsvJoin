@@ -34,4 +34,22 @@ public class SelectColumnTests
         sut.IsWildcard.Should().BeFalse();
         sut.DefaultValue.Should().BeNull();
     }
+
+    [Fact(DisplayName = "SelectColumn Bind resolves header for explicit column.")]
+    [Trait("Category", "Unit")]
+    public void BindResolvesHeaderForExplicitColumn()
+    {
+        // Arrange
+        var sut = new SelectColumn("left", "id", "Identifier", false, "0");
+        var dataSet = new CsvDataSet("left", "left.csv", ["Id"], []);
+
+        // Act
+        var result = sut.Bind(dataSet, JoinSourceSide.Left);
+
+        // Assert
+        result.Should().ContainSingle();
+        result[0].SourceField.Should().Be("Id");
+        result[0].OutputField.Should().Be("Identifier");
+        result[0].DefaultValue.Should().Be("0");
+    }
 }

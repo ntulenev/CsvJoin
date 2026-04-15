@@ -1,11 +1,10 @@
-using CsvJoin.Configuration;
 using CsvJoin.Models;
 
 namespace CsvJoin.Abstractions.Presentation;
 
 internal interface IConsoleOutputRenderer
 {
-    void RenderHeader(AppSettings settings, CsvJoinQuery query);
+    void RenderHeader(ConfiguredJoinJob job);
 
     void RenderResult(CsvJoinResult result, int consoleMaxRows);
 

@@ -14,41 +14,24 @@ public class SpectreConsoleOutputRendererTests
     {
         // Arrange
         var sut = new SpectreConsoleOutputRenderer();
-        var settings = CreateSettings();
-        var query = CreateQuery();
+        var job = CreateJob();
 
         // Act
-        var exception = Record.Exception(() => sut.RenderHeader(settings, query));
+        var exception = Record.Exception(() => sut.RenderHeader(job));
 
         // Assert
         exception.Should().BeNull();
     }
 
-    [Fact(DisplayName = "SpectreConsoleOutputRenderer RenderHeader throws when settings are null.")]
+    [Fact(DisplayName = "SpectreConsoleOutputRenderer RenderHeader throws when job is null.")]
     [Trait("Category", "Unit")]
-    public void RenderHeaderThrowsWhenSettingsAreNull()
+    public void RenderHeaderThrowsWhenJobIsNull()
     {
         // Arrange
         var sut = new SpectreConsoleOutputRenderer();
-        var query = CreateQuery();
 
         // Act
-        Action action = () => sut.RenderHeader(null!, query);
-
-        // Assert
-        action.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact(DisplayName = "SpectreConsoleOutputRenderer RenderHeader throws when query is null.")]
-    [Trait("Category", "Unit")]
-    public void RenderHeaderThrowsWhenQueryIsNull()
-    {
-        // Arrange
-        var sut = new SpectreConsoleOutputRenderer();
-        var settings = CreateSettings();
-
-        // Act
-        Action action = () => sut.RenderHeader(settings, null!);
+        Action action = () => sut.RenderHeader(null!);
 
         // Assert
         action.Should().Throw<ArgumentNullException>();
@@ -168,24 +151,14 @@ public class SpectreConsoleOutputRendererTests
         action.Should().Throw<ArgumentException>();
     }
 
-    private static AppSettings CreateSettings()
+    private static ConfiguredJoinJob CreateJob()
     {
-        return new AppSettings
-        {
-            Sources = new Dictionary<string, CsvSourceOptions>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["left"] = new CsvSourceOptions { FilePath = "left.csv" },
-                ["right"] = new CsvSourceOptions { FilePath = "right.csv" },
-            },
-            Query = "SELECT left.Id FROM left INNER JOIN right ON left.Id = right.Id",
-            Output = new OutputOptions(),
-        };
-    }
-
-    private static CsvJoinQuery CreateQuery()
-    {
-        var columns = new[] { new SelectColumn("left", "Id", "Id") };
-        return new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, columns);
+        var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, [new SelectColumn("left", "Id", "Id")]);
+        return new ConfiguredJoinJob(
+            query,
+            new ConfiguredCsvSource("left", new CsvSourceOptions { FilePath = "left.csv", Delimiter = "," }),
+            new ConfiguredCsvSource("right", new CsvSourceOptions { FilePath = "right.csv", Delimiter = "," }),
+            new JoinOutputSettings("results", ",", 10, false));
     }
 
     private static CsvJoinResult CreateResult()

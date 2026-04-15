@@ -50,7 +50,7 @@ public class CsvJoinApplicationEndToEndTests
 
             JoinOutputFile? capturedOutputFile = null;
             var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);
-            consoleOutputRendererMock.Setup(x => x.RenderHeader(settings, It.IsAny<CsvJoinQuery>()));
+            consoleOutputRendererMock.Setup(x => x.RenderHeader(It.IsAny<ConfiguredJoinJob>()));
             consoleOutputRendererMock.Setup(x => x.RenderResult(It.IsAny<CsvJoinResult>(), settings.Output.ConsoleMaxRows));
             consoleOutputRendererMock
                 .Setup(x => x.PrintFileSaved(It.IsAny<JoinOutputFile>()))
@@ -59,7 +59,7 @@ public class CsvJoinApplicationEndToEndTests
             var resultFileLauncherMock = new Mock<IResultFileLauncher>(MockBehavior.Strict);
 
             var sut = new CsvJoinApplication(
-                new CsvJoinQueryParser(),
+                new ConfiguredJoinJobFactory(new CsvJoinQueryParser()),
                 new CsvFileReader(),
                 new CsvJoinProcessor(),
                 consoleOutputRendererMock.Object,
