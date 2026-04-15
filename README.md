@@ -2,6 +2,8 @@
 
 Console utility that reads two CSV files from `appsettings.json`, applies a SQL-like join from configuration, prints the result to the console, saves the full result to a CSV file, and can open that file after completion.
 
+![CsvJoin Screenshot](./Screenshot.png)
+
 ## Structure
 
 The project follows the same high-level approach as `NReleaseBuilder`:
