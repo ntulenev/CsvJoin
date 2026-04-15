@@ -48,12 +48,19 @@ internal static class CsvJoinCompositionRoot
 
         services.AddSingleton<IValidateOptions<AppSettings>, AppSettingsValidator>();
         services.AddTransient<ICsvJoinQueryParser, CsvJoinQueryParser>();
+        services.AddTransient<IConfiguredJoinJobSettingsBinder, ConfiguredJoinJobSettingsBinder>();
         services.AddTransient<IConfiguredJoinJobBinder, ConfiguredJoinJobBinder>();
         services.AddSingleton(static serviceProvider =>
         {
             var settings = serviceProvider.GetRequiredService<IOptions<AppSettings>>().Value;
             var binder = serviceProvider.GetRequiredService<IConfiguredJoinJobBinder>();
-            return binder.Bind(settings);
+            var bindingResult = binder.Bind(settings);
+            if (!bindingResult.IsSuccess || bindingResult.Job is null)
+            {
+                throw new InvalidOperationException(string.Join(Environment.NewLine, bindingResult.Errors));
+            }
+
+            return bindingResult.Job;
         });
         services.AddTransient<ICsvFileReader, CsvFileReader>();
         services.AddTransient<ICsvJoinProcessor, CsvJoinProcessor>();

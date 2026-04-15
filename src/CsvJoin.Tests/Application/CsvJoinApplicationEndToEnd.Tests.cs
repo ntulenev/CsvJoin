@@ -45,7 +45,7 @@ public class CsvJoinApplicationEndToEndTests
                     ResultsDirectory = resultsDirectory,
                 },
             };
-            var configuredJoinJob = new ConfiguredJoinJobBinder(new CsvJoinQueryParser()).Bind(settings);
+            var configuredJoinJob = new ConfiguredJoinJobBinder(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser())).Bind(settings).Job!;
 
             JoinOutputFile? capturedOutputFile = null;
             var consoleOutputRendererMock = new Mock<IConsoleOutputRenderer>(MockBehavior.Strict);

@@ -2,8 +2,6 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-
 using CsvJoin.Abstractions.Application;
 
 namespace CsvJoin.Tests;
@@ -43,9 +41,9 @@ public class CsvJoinCompositionRootTests
         }
     }
 
-    [Fact(DisplayName = "AddCsvJoinServices throws when configuration is invalid.")]
+    [Fact(DisplayName = "AddCsvJoinServices throws when source file is missing.")]
     [Trait("Category", "Unit")]
-    public void AddCsvJoinServicesThrowsWhenConfigurationIsInvalid()
+    public void AddCsvJoinServicesThrowsWhenSourceFileIsMissing()
     {
         // Arrange
         var tempDirectory = CreateTemporaryDirectory();
@@ -66,7 +64,8 @@ public class CsvJoinCompositionRootTests
             Action action = () => _ = serviceProvider.GetRequiredService<ICsvJoinApplication>();
 
             // Assert
-            action.Should().Throw<OptionsValidationException>();
+            action.Should().Throw<InvalidOperationException>()
+                .WithMessage("*missing-right.csv*");
         }
         finally
         {

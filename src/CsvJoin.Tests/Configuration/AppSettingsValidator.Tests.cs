@@ -15,7 +15,7 @@ public class AppSettingsValidatorTests
     public void ValidateThrowsWhenOptionsAreNull()
     {
         // Arrange
-        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser()));
 
         // Act
         Action action = () => _ = sut.Validate(Options.DefaultName, null!);
@@ -32,7 +32,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id,Name\n1,Alice\n");
         using var rightCsv = TempCsvFile.Create("Id,Status\n1,Active\n");
-        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings(leftCsv.Path, rightCsv.Path);
 
         // Act
@@ -42,21 +42,19 @@ public class AppSettingsValidatorTests
         result.Succeeded.Should().BeTrue();
     }
 
-    [Fact(DisplayName = "AppSettingsValidator Validate fails when source file does not exist.")]
+    [Fact(DisplayName = "AppSettingsValidator Validate succeeds when source file does not exist.")]
     [Trait("Category", "Unit")]
-    public void ValidateFailsWhenSourceFileDoesNotExist()
+    public void ValidateSucceedsWhenSourceFileDoesNotExist()
     {
         // Arrange
-        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings("missing-left.csv", "missing-right.csv");
 
         // Act
         var result = sut.Validate(Options.DefaultName, settings);
 
         // Assert
-        result.Failed.Should().BeTrue();
-        result.Failures.Should().Contain(x => x.Contains("left", StringComparison.OrdinalIgnoreCase));
-        result.Failures.Should().Contain(x => x.Contains("right", StringComparison.OrdinalIgnoreCase));
+        result.Succeeded.Should().BeTrue();
     }
 
     [Fact(DisplayName = "AppSettingsValidator Validate fails when query is invalid.")]
@@ -66,7 +64,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id\n1\n");
         using var rightCsv = TempCsvFile.Create("Id\n1\n");
-        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings(
             leftCsv.Path,
             rightCsv.Path,
@@ -87,7 +85,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id\n1\n");
         using var rightCsv = TempCsvFile.Create("Id\n1\n");
-        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser()));
         var settings = CreateValidSettings(
             leftCsv.Path,
             rightCsv.Path,
@@ -108,7 +106,7 @@ public class AppSettingsValidatorTests
         // Arrange
         using var leftCsv = TempCsvFile.Create("Id\n1\n");
         using var rightCsv = TempCsvFile.Create("Id\n1\n");
-        var sut = new AppSettingsValidator(new ConfiguredJoinJobBinder(new CsvJoinQueryParser()));
+        var sut = new AppSettingsValidator(new ConfiguredJoinJobSettingsBinder(new CsvJoinQueryParser()));
         var invalidOutput = new OutputOptions
         {
             ResultsDirectory = " ",

@@ -12,11 +12,11 @@ internal sealed class AppSettingsValidator : IValidateOptions<AppSettings>
     /// <summary>
     /// Initializes a new instance of the <see cref="AppSettingsValidator"/> class.
     /// </summary>
-    /// <param name="configuredJoinJobBinder">The binder used to validate the configured join job.</param>
-    public AppSettingsValidator(IConfiguredJoinJobBinder configuredJoinJobBinder)
+    /// <param name="settingsBinder">The binder used to validate pure configuration rules.</param>
+    public AppSettingsValidator(IConfiguredJoinJobSettingsBinder settingsBinder)
     {
-        ArgumentNullException.ThrowIfNull(configuredJoinJobBinder);
-        _configuredJoinJobBinder = configuredJoinJobBinder;
+        ArgumentNullException.ThrowIfNull(settingsBinder);
+        _settingsBinder = settingsBinder;
     }
 
     /// <inheritdoc />
@@ -24,11 +24,11 @@ internal sealed class AppSettingsValidator : IValidateOptions<AppSettings>
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var errors = _configuredJoinJobBinder.Validate(options);
+        var errors = _settingsBinder.Bind(options).Errors;
         return errors.Count == 0
             ? ValidateOptionsResult.Success
             : ValidateOptionsResult.Fail(errors);
     }
 
-    private readonly IConfiguredJoinJobBinder _configuredJoinJobBinder;
+    private readonly IConfiguredJoinJobSettingsBinder _settingsBinder;
 }
