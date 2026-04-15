@@ -43,6 +43,38 @@ public class CsvJoinQueryParserTests
         result.SelectColumns[0].SourceField.Should().Be("*");
     }
 
+    [Fact(DisplayName = "CsvJoinQueryParser Parse supports coalesce default values.")]
+    [Trait("Category", "Unit")]
+    public void ParseSupportsCoalesceDefaultValues()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        var result = sut.Parse("SELECT left.Id, COALESCE(right.Status, 'Unknown') AS Status FROM left LEFT JOIN right ON left.Id = right.Id");
+
+        // Assert
+        result.SelectColumns.Should().HaveCount(2);
+        result.SelectColumns[1].SourceAlias.Should().Be("right");
+        result.SelectColumns[1].SourceField.Should().Be("Status");
+        result.SelectColumns[1].OutputField.Should().Be("Status");
+        result.SelectColumns[1].DefaultValue.Should().Be("Unknown");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse supports escaped single quote in coalesce default value.")]
+    [Trait("Category", "Unit")]
+    public void ParseSupportsEscapedSingleQuoteInCoalesceDefaultValue()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        var result = sut.Parse("SELECT COALESCE(right.Status, 'Can''t map') AS Status FROM left LEFT JOIN right ON left.Id = right.Id");
+
+        // Assert
+        result.SelectColumns[0].DefaultValue.Should().Be("Can't map");
+    }
+
     [Fact(DisplayName = "CsvJoinQueryParser Parse throws for invalid query.")]
     [Trait("Category", "Unit")]
     public void ParseThrowsForInvalidQuery()
@@ -131,5 +163,20 @@ public class CsvJoinQueryParserTests
         // Assert
         action.Should().Throw<FormatException>()
             .WithMessage("*empty column expression*");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when coalesce uses wildcard.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenCoalesceUsesWildcard()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT COALESCE(right.*, 'Unknown') FROM left LEFT JOIN right ON left.Id = right.Id");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*invalid*");
     }
 }

@@ -30,7 +30,7 @@ Example:
       "Delimiter": ","
     }
   },
-  "Query": "SELECT left.Id, left.Name, right.Status AS TargetStatus FROM left LEFT JOIN right ON left.Id = right.Id",
+  "Query": "SELECT left.Id, left.Name, COALESCE(right.Status, 'Unknown') AS TargetStatus FROM left LEFT JOIN right ON left.Id = right.Id",
   "Output": {
     "ResultsDirectory": "results",
     "Delimiter": ",",
@@ -45,7 +45,7 @@ Example:
 Supported query format:
 
 ```text
-SELECT left.Id, right.[Full Name] AS Name
+SELECT left.Id, COALESCE(right.[Full Name], 'Unknown') AS Name
 FROM left INNER|LEFT|RIGHT|FULL JOIN right
 ON left.Id = right.ExternalId
 ```
@@ -54,6 +54,7 @@ Supported features:
 
 - `INNER`, `LEFT`, `RIGHT`, `FULL`
 - field aliases via `AS`
+- per-column fallback values via `COALESCE(alias.Field, 'default')`
 - headers with spaces via brackets: `right.[Full Name]`
 - wildcard selection: `left.*`, `right.*`
 

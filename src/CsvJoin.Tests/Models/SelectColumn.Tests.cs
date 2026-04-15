@@ -12,13 +12,14 @@ public class SelectColumnTests
     {
         // Arrange
         // Act
-        var sut = new SelectColumn("right", "Status", "TargetStatus", true);
+        var sut = new SelectColumn("right", "Status", "TargetStatus", true, "Unknown");
 
         // Assert
         sut.SourceAlias.Should().Be("right");
         sut.SourceField.Should().Be("Status");
         sut.OutputField.Should().Be("TargetStatus");
         sut.IsWildcard.Should().BeTrue();
+        sut.DefaultValue.Should().Be("Unknown");
     }
 
     [Fact(DisplayName = "SelectColumn wildcard defaults to false.")]
@@ -31,5 +32,6 @@ public class SelectColumnTests
 
         // Assert
         sut.IsWildcard.Should().BeFalse();
+        sut.DefaultValue.Should().BeNull();
     }
 }

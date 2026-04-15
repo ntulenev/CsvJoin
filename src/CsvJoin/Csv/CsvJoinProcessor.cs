@@ -111,9 +111,11 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
                     ? rightRow
                     : null;
 
-            values[index] = sourceRow is not null && sourceRow.Values.TryGetValue(outputColumn.SourceField, out var fieldValue)
+            var projectedValue = sourceRow is not null && sourceRow.Values.TryGetValue(outputColumn.SourceField, out var fieldValue)
                 ? fieldValue
                 : null;
+
+            values[index] = projectedValue ?? outputColumn.DefaultValue;
         }
 
         return values;
@@ -136,7 +138,7 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
             }
 
             var actualHeader = source.ResolveHeader(selectedColumn.SourceField);
-            rawColumns.Add(new JoinOutputColumn(selectedColumn.SourceAlias, actualHeader, selectedColumn.OutputField));
+            rawColumns.Add(new JoinOutputColumn(selectedColumn.SourceAlias, actualHeader, selectedColumn.OutputField, selectedColumn.DefaultValue));
         }
 
         var outputNameUsage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);

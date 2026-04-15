@@ -76,6 +76,55 @@ public class CsvJoinProcessorTests
         result.Rows[1].Should().Equal(expectedSecondRow);
     }
 
+    [Fact(DisplayName = "CsvJoinProcessor Process uses default value for unmatched right row when select column defines fallback.")]
+    [Trait("Category", "Unit")]
+    public void ProcessUsesDefaultValueForUnmatchedRightRowWhenSelectColumnDefinesFallback()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "Id",
+            JoinType.Left,
+            [new SelectColumn("left", "Id", "Id"), new SelectColumn("right", "Status", "Status", false, "Unknown")]);
+        var left = BuildDataSet("left", ["Id"], [["1"], ["2"]]);
+        var right = BuildDataSet("right", ["Id", "Status"], [["1", "Ready"]]);
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().HaveCount(2);
+        result.Rows[0].Should().Equal("1", "Ready");
+        result.Rows[1].Should().Equal("2", "Unknown");
+    }
+
+    [Fact(DisplayName = "CsvJoinProcessor Process uses default value for matched row when field value is null.")]
+    [Trait("Category", "Unit")]
+    public void ProcessUsesDefaultValueForMatchedRowWhenFieldValueIsNull()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "Id",
+            JoinType.Left,
+            [new SelectColumn("right", "Status", "Status", false, "Unknown")]);
+        var left = BuildDataSet("left", ["Id"], [["1"]]);
+        var right = BuildDataSetWithNullableValues("right", ["Id", "Status"], [["1", null]]);
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().ContainSingle();
+        result.Rows[0].Should().Equal("Unknown");
+    }
+
     [Fact(DisplayName = "CsvJoinProcessor Process returns unmatched rows from both sides for full join.")]
     [Trait("Category", "Unit")]
     public void ProcessReturnsUnmatchedRowsFromBothSidesForFullJoin()
@@ -213,6 +262,15 @@ public class CsvJoinProcessorTests
     }
 
     private static CsvDataSet BuildDataSet(string alias, IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<string>> rows)
+    {
+        var nullableRows = rows
+            .Select(values => values.Select(static value => (string?)value).ToArray())
+            .ToArray();
+
+        return BuildDataSetWithNullableValues(alias, headers, nullableRows);
+    }
+
+    private static CsvDataSet BuildDataSetWithNullableValues(string alias, IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<string?>> rows)
     {
         var mappedRows = rows
             .Select((values, index) =>

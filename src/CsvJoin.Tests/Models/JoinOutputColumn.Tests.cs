@@ -12,11 +12,12 @@ public class JoinOutputColumnTests
     {
         // Arrange
         // Act
-        var sut = new JoinOutputColumn("left", "Id", "OutputId");
+        var sut = new JoinOutputColumn("left", "Id", "OutputId", "Unknown");
 
         // Assert
         sut.SourceAlias.Should().Be("left");
         sut.SourceField.Should().Be("Id");
         sut.OutputField.Should().Be("OutputId");
+        sut.DefaultValue.Should().Be("Unknown");
     }
 }
