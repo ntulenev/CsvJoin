@@ -4,17 +4,25 @@ using CsvJoin.Abstractions.Csv;
 
 namespace CsvJoin.Configuration;
 
+/// <summary>
+/// Validates application settings before execution starts.
+/// </summary>
 internal sealed class AppSettingsValidator : IValidateOptions<AppSettings>
 {
     private static readonly StringComparer AliasComparer = StringComparer.OrdinalIgnoreCase;
     private readonly ICsvJoinQueryParser _queryParser;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AppSettingsValidator"/> class.
+    /// </summary>
+    /// <param name="queryParser">The parser used to validate the configured query.</param>
     public AppSettingsValidator(ICsvJoinQueryParser queryParser)
     {
         ArgumentNullException.ThrowIfNull(queryParser);
         _queryParser = queryParser;
     }
 
+    /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, AppSettings options)
     {
         ArgumentNullException.ThrowIfNull(options);
