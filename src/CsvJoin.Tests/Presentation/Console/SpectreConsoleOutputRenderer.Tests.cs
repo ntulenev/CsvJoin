@@ -167,6 +167,18 @@ public class SpectreConsoleOutputRendererTests
     {
         var headers = new[] { "Id" };
         var rows = new[] { (IReadOnlyList<string?>)new string?[] { "1" } };
-        return new CsvJoinResult("left.csv", "right.csv", headers, rows);
+        var diagnostics = new JoinDiagnostics(
+            LeftSourceRows: 2,
+            RightSourceRows: 2,
+            LeftRowsAfterFilters: 1,
+            RightRowsAfterFilters: 1,
+            MatchedRowPairs: 1,
+            UnmatchedLeftRows: 0,
+            UnmatchedRightRows: 0,
+            ProjectedRowsBeforeResultOptions: 1,
+            DuplicateLeftJoinKeys: 0,
+            DuplicateRightJoinKeys: 0);
+
+        return new CsvJoinResult("left.csv", "right.csv", headers, rows, diagnostics);
     }
 }

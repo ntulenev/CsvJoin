@@ -7,8 +7,10 @@ namespace CsvJoin.Models;
 /// <param name="RightFilePath">The right source file path.</param>
 /// <param name="Headers">The output headers.</param>
 /// <param name="Rows">The output rows.</param>
+/// <param name="Diagnostics">The join diagnostics, when produced by the join processor.</param>
 internal sealed record CsvJoinResult(
     string LeftFilePath,
     string RightFilePath,
     IReadOnlyList<string> Headers,
-    IReadOnlyList<IReadOnlyList<string?>> Rows);
+    IReadOnlyList<IReadOnlyList<string?>> Rows,
+    JoinDiagnostics? Diagnostics = null);

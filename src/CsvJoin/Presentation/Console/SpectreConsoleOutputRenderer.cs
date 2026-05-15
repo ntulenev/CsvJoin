@@ -38,6 +38,7 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
 
         AnsiConsole.MarkupLine($"[grey]Result rows:[/] [silver]{result.Rows.Count}[/]");
         AnsiConsole.MarkupLine($"[grey]Result columns:[/] [silver]{result.Headers.Count}[/]");
+        RenderDiagnostics(result.Diagnostics);
 
         var table = new Table()
             .Border(TableBorder.Rounded)
@@ -96,6 +97,26 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
     }
 
     private static string FormatCell(string? value) => value is null ? "[grey](null)[/]" : Markup.Escape(value);
+
+    private static void RenderDiagnostics(JoinDiagnostics? diagnostics)
+    {
+        if (diagnostics is null)
+        {
+            return;
+        }
+
+        AnsiConsole.MarkupLine(
+            $"[grey]Left rows:[/] [silver]{diagnostics.LeftSourceRows}[/] [grey]->[/] [silver]{diagnostics.LeftRowsAfterFilters}[/] [grey]after filters[/]");
+        AnsiConsole.MarkupLine(
+            $"[grey]Right rows:[/] [silver]{diagnostics.RightSourceRows}[/] [grey]->[/] [silver]{diagnostics.RightRowsAfterFilters}[/] [grey]after filters[/]");
+        AnsiConsole.MarkupLine($"[grey]Matched pairs:[/] [silver]{diagnostics.MatchedRowPairs}[/]");
+        AnsiConsole.MarkupLine(
+            $"[grey]Unmatched left/right:[/] [silver]{diagnostics.UnmatchedLeftRows}[/][grey]/[/][silver]{diagnostics.UnmatchedRightRows}[/]");
+        AnsiConsole.MarkupLine(
+            $"[grey]Duplicate join keys left/right:[/] [silver]{diagnostics.DuplicateLeftJoinKeys}[/][grey]/[/][silver]{diagnostics.DuplicateRightJoinKeys}[/]");
+        AnsiConsole.MarkupLine(
+            $"[grey]Rows before DISTINCT/ORDER/LIMIT:[/] [silver]{diagnostics.ProjectedRowsBeforeResultOptions}[/]");
+    }
 
     private static string FormatQuery(string queryText)
     {

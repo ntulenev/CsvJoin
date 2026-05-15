@@ -34,9 +34,18 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
         var boundQuery = query.Bind(left, right);
         var filteredLeft = ApplySourceFilters(left, boundQuery, JoinSourceSide.Left);
         var filteredRight = ApplySourceFilters(right, boundQuery, JoinSourceSide.Right);
-        var rows = ApplyResultOptions(BuildRows(boundQuery, filteredLeft, filteredRight, joinKeys), boundQuery);
+        var joinResult = BuildRows(boundQuery, filteredLeft, filteredRight, joinKeys);
+        var rows = ApplyResultOptions(joinResult.Rows, boundQuery);
+        var diagnostics = BuildDiagnostics(
+            left,
+            right,
+            filteredLeft,
+            filteredRight,
+            boundQuery,
+            joinKeys,
+            joinResult);
 
-        return new CsvJoinResult(left.FilePath, right.FilePath, boundQuery.Headers, rows);
+        return new CsvJoinResult(left.FilePath, right.FilePath, boundQuery.Headers, rows, diagnostics);
     }
 
     private static CsvDataSet ApplySourceFilters(CsvDataSet source, BoundJoinQuery query, JoinSourceSide sourceSide)
@@ -57,7 +66,7 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
         return new CsvDataSet(source.Alias, source.FilePath, source.Headers, rows);
     }
 
-    private static List<IReadOnlyList<string?>> BuildRows(
+    private static JoinBuildResult BuildRows(
         BoundJoinQuery query,
         CsvDataSet left,
         CsvDataSet right,
@@ -66,6 +75,8 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
         var rightLookup = right.BuildLookup(query.RightJoinHeader, joinKeys);
         var matchedRightIndexes = new HashSet<int>();
         var resultRows = new List<IReadOnlyList<string?>>();
+        var matchedRowPairs = 0;
+        var unmatchedLeftRows = 0;
 
         foreach (var leftRow in left.Rows)
         {
@@ -75,6 +86,7 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
                 foreach (var rightRow in matchingRightRows)
                 {
                     matchedRightIndexes.Add(rightRow.Index);
+                    matchedRowPairs++;
                     resultRows.Add(query.ProjectRow(leftRow, rightRow));
                 }
 
@@ -85,8 +97,11 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
             {
                 resultRows.Add(query.ProjectRow(leftRow, null));
             }
+
+            unmatchedLeftRows++;
         }
 
+        var unmatchedRightRows = 0;
         if (query.JoinType is JoinType.Right or JoinType.Full)
         {
             foreach (var rightRow in right.Rows)
@@ -97,10 +112,48 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
                 }
 
                 resultRows.Add(query.ProjectRow(null, rightRow));
+                unmatchedRightRows++;
             }
         }
+        else
+        {
+            unmatchedRightRows = right.Rows.Count(row => !matchedRightIndexes.Contains(row.Index));
+        }
 
-        return resultRows;
+        return new JoinBuildResult(resultRows, matchedRowPairs, unmatchedLeftRows, unmatchedRightRows);
+    }
+
+    private static JoinDiagnostics BuildDiagnostics(
+        CsvDataSet left,
+        CsvDataSet right,
+        CsvDataSet filteredLeft,
+        CsvDataSet filteredRight,
+        BoundJoinQuery query,
+        JoinKeyNormalizationSettings joinKeys,
+        JoinBuildResult joinResult)
+    {
+        return new JoinDiagnostics(
+            left.Rows.Count,
+            right.Rows.Count,
+            filteredLeft.Rows.Count,
+            filteredRight.Rows.Count,
+            joinResult.MatchedRowPairs,
+            joinResult.UnmatchedLeftRows,
+            joinResult.UnmatchedRightRows,
+            joinResult.Rows.Count,
+            CountDuplicateJoinKeys(filteredLeft, query.LeftJoinHeader, joinKeys),
+            CountDuplicateJoinKeys(filteredRight, query.RightJoinHeader, joinKeys));
+    }
+
+    private static int CountDuplicateJoinKeys(
+        CsvDataSet source,
+        string joinHeader,
+        JoinKeyNormalizationSettings joinKeys)
+    {
+        var resolvedHeader = source.ResolveHeader(joinHeader);
+        return source.Rows
+            .GroupBy(row => row.GetJoinKey(resolvedHeader, joinKeys), joinKeys.Comparer)
+            .Count(group => group.Count() > 1);
     }
 
     private static IReadOnlyList<string?>[] ApplyResultOptions(
@@ -208,4 +261,10 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
             return hashCode.ToHashCode();
         }
     }
+
+    private sealed record JoinBuildResult(
+        IReadOnlyList<IReadOnlyList<string?>> Rows,
+        int MatchedRowPairs,
+        int UnmatchedLeftRows,
+        int UnmatchedRightRows);
 }

@@ -301,6 +301,17 @@ public class CsvJoinProcessorTests
         result.Rows[0].Should().Equal("1", "Ready");
         result.Rows[1].Should().Equal("3", "Unknown");
         result.Rows[2].Should().Equal("4", "Done");
+        result.Diagnostics.Should().NotBeNull();
+        result.Diagnostics!.LeftSourceRows.Should().Be(4);
+        result.Diagnostics.RightSourceRows.Should().Be(4);
+        result.Diagnostics.LeftRowsAfterFilters.Should().Be(3);
+        result.Diagnostics.RightRowsAfterFilters.Should().Be(3);
+        result.Diagnostics.MatchedRowPairs.Should().Be(2);
+        result.Diagnostics.UnmatchedLeftRows.Should().Be(1);
+        result.Diagnostics.UnmatchedRightRows.Should().Be(1);
+        result.Diagnostics.ProjectedRowsBeforeResultOptions.Should().Be(3);
+        result.Diagnostics.DuplicateLeftJoinKeys.Should().Be(0);
+        result.Diagnostics.DuplicateRightJoinKeys.Should().Be(0);
     }
 
     [Fact(DisplayName = "CsvJoinProcessor Process throws when order by column is missing.")]
