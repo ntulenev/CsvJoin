@@ -45,6 +45,7 @@ public class ConfiguredJoinJobBinderTests
         result.IsSuccess.Should().BeTrue();
         result.Job.Should().NotBeNull();
         result.Job!.Query.LeftAlias.Should().Be("left");
+        result.Job.QueryText.Should().Be(settings.Query);
         result.Job.LeftSource.FilePath.Should().Be(leftCsv.Path);
         result.Job.RightSource.Delimiter.Should().Be(";");
         result.Job.JoinKeys.TrimWhitespace.Should().BeTrue();

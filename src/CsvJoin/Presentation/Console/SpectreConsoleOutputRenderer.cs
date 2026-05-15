@@ -20,6 +20,7 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
         AnsiConsole.MarkupLine($"[grey]Right source:[/] [silver]{Markup.Escape(job.RightSource.FilePath)}[/]");
         AnsiConsole.MarkupLine(
             $"[grey]Join:[/] [silver]{Markup.Escape(job.Query.JoinType.ToString().ToUpperInvariant())} on {Markup.Escape(job.Query.LeftAlias)}.{Markup.Escape(job.Query.LeftJoinField)} = {Markup.Escape(job.Query.RightAlias)}.{Markup.Escape(job.Query.RightJoinField)}[/]");
+        AnsiConsole.MarkupLine($"[grey]Query:[/] [silver]{Markup.Escape(job.QueryText)}[/]");
         AnsiConsole.MarkupLine($"[grey]Output directory:[/] [silver]{Markup.Escape(job.Output.ResultsDirectory)}[/]");
         AnsiConsole.WriteLine();
     }

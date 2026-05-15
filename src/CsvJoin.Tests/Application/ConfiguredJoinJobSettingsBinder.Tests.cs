@@ -37,6 +37,7 @@ public class ConfiguredJoinJobSettingsBinderTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Job.Should().NotBeNull();
+        result.Job!.QueryText.Should().Be(settings.Query);
         result.Errors.Should().BeEmpty();
     }
 

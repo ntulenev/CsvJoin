@@ -156,6 +156,7 @@ public class SpectreConsoleOutputRendererTests
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, [new SelectColumn("left", "Id", "Id")]);
         return new ConfiguredJoinJob(
             query,
+            "SELECT left.Id FROM left INNER JOIN right ON left.Id = right.Id",
             new ConfiguredCsvSource("left", new CsvSourceOptions { FilePath = "left.csv", Delimiter = "," }),
             new ConfiguredCsvSource("right", new CsvSourceOptions { FilePath = "right.csv", Delimiter = "," }),
             new JoinKeyNormalizationSettings(false, false),

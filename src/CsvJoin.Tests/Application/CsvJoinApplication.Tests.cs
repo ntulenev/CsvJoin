@@ -406,6 +406,7 @@ public class CsvJoinApplicationTests
     {
         return new ConfiguredJoinJob(
             query,
+            "SELECT left.Id, right.Status FROM left INNER JOIN right ON left.Id = right.Id",
             new ConfiguredCsvSource(query.LeftAlias, new CsvSourceOptions { FilePath = "left.csv", Delimiter = "," }),
             new ConfiguredCsvSource(query.RightAlias, new CsvSourceOptions { FilePath = "right.csv", Delimiter = "," }),
             new JoinKeyNormalizationSettings(false, false),

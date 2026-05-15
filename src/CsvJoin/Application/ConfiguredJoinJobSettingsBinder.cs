@@ -45,6 +45,7 @@ internal sealed class ConfiguredJoinJobSettingsBinder : IConfiguredJoinJobSettin
 
         var job = new ConfiguredJoinJob(
             query,
+            settings.Query,
             new ConfiguredCsvSource(query.LeftAlias, leftSource),
             new ConfiguredCsvSource(query.RightAlias, rightSource),
             new JoinKeyNormalizationSettings(settings.JoinKeys.TrimWhitespace, settings.JoinKeys.IgnoreCase),
