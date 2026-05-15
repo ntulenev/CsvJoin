@@ -1,3 +1,5 @@
+using System.Text;
+
 using Spectre.Console;
 
 using CsvJoin.Abstractions.Presentation;
@@ -20,7 +22,7 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
         AnsiConsole.MarkupLine($"[grey]Right source:[/] [silver]{Markup.Escape(job.RightSource.FilePath)}[/]");
         AnsiConsole.MarkupLine(
             $"[grey]Join:[/] [silver]{Markup.Escape(job.Query.JoinType.ToString().ToUpperInvariant())} on {Markup.Escape(job.Query.LeftAlias)}.{Markup.Escape(job.Query.LeftJoinField)} = {Markup.Escape(job.Query.RightAlias)}.{Markup.Escape(job.Query.RightJoinField)}[/]");
-        AnsiConsole.MarkupLine($"[grey]Query:[/] [silver]{Markup.Escape(job.QueryText)}[/]");
+        AnsiConsole.MarkupLine($"[grey]Query:[/] {FormatQuery(job.QueryText)}");
         AnsiConsole.MarkupLine($"[grey]Output directory:[/] [silver]{Markup.Escape(job.Output.ResultsDirectory)}[/]");
         AnsiConsole.WriteLine();
     }
@@ -94,4 +96,137 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
     }
 
     private static string FormatCell(string? value) => value is null ? "[grey](null)[/]" : Markup.Escape(value);
+
+    private static string FormatQuery(string queryText)
+    {
+        var builder = new StringBuilder(queryText.Length);
+
+        for (var index = 0; index < queryText.Length;)
+        {
+            var current = queryText[index];
+            if (char.IsWhiteSpace(current))
+            {
+                builder.Append(current);
+                index++;
+                continue;
+            }
+
+            if (current == '\'')
+            {
+                index = AppendQuotedString(queryText, index, builder);
+                continue;
+            }
+
+            if (char.IsLetter(current) || current == '_')
+            {
+                index = AppendWord(queryText, index, builder);
+                continue;
+            }
+
+            if (char.IsDigit(current))
+            {
+                index = AppendNumber(queryText, index, builder);
+                continue;
+            }
+
+            builder.Append("[grey]").Append(Markup.Escape(current.ToString())).Append("[/]");
+            index++;
+        }
+
+        return builder.ToString();
+    }
+
+    private static int AppendQuotedString(string queryText, int startIndex, StringBuilder builder)
+    {
+        var endIndex = startIndex + 1;
+        while (endIndex < queryText.Length)
+        {
+            if (queryText[endIndex] == '\'')
+            {
+                if (endIndex + 1 < queryText.Length && queryText[endIndex + 1] == '\'')
+                {
+                    endIndex += 2;
+                    continue;
+                }
+
+                endIndex++;
+                break;
+            }
+
+            endIndex++;
+        }
+
+        builder
+            .Append("[darkseagreen3]")
+            .Append(Markup.Escape(queryText[startIndex..endIndex]))
+            .Append("[/]");
+
+        return endIndex;
+    }
+
+    private static int AppendWord(string queryText, int startIndex, StringBuilder builder)
+    {
+        var endIndex = startIndex + 1;
+        while (endIndex < queryText.Length && (char.IsLetterOrDigit(queryText[endIndex]) || queryText[endIndex] == '_'))
+        {
+            endIndex++;
+        }
+
+        var word = queryText[startIndex..endIndex];
+        if (QueryKeywords.Contains(word))
+        {
+            builder.Append("[bold deepskyblue1]").Append(Markup.Escape(word)).Append("[/]");
+        }
+        else if (QueryFunctions.Contains(word))
+        {
+            builder.Append("[mediumpurple1]").Append(Markup.Escape(word)).Append("[/]");
+        }
+        else
+        {
+            builder.Append("[silver]").Append(Markup.Escape(word)).Append("[/]");
+        }
+
+        return endIndex;
+    }
+
+    private static int AppendNumber(string queryText, int startIndex, StringBuilder builder)
+    {
+        var endIndex = startIndex + 1;
+        while (endIndex < queryText.Length && char.IsDigit(queryText[endIndex]))
+        {
+            endIndex++;
+        }
+
+        builder
+            .Append("[orange1]")
+            .Append(Markup.Escape(queryText[startIndex..endIndex]))
+            .Append("[/]");
+
+        return endIndex;
+    }
+
+    private static readonly HashSet<string> QueryKeywords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "AS",
+        "ASC",
+        "BY",
+        "DESC",
+        "DISTINCT",
+        "FROM",
+        "FULL",
+        "INNER",
+        "JOIN",
+        "LEFT",
+        "LIMIT",
+        "ON",
+        "ORDER",
+        "RIGHT",
+        "SELECT",
+        "TOP",
+    };
+
+    private static readonly HashSet<string> QueryFunctions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "COALESCE",
+    };
 }
