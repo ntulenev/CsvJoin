@@ -9,13 +9,19 @@ namespace CsvJoin.Models;
 /// <param name="RightJoinField">The right join field.</param>
 /// <param name="JoinType">The join type.</param>
 /// <param name="SelectColumns">The selected output columns.</param>
+/// <param name="IsDistinct">Indicates whether duplicate result rows should be removed.</param>
+/// <param name="OrderByColumns">The output columns used to sort result rows.</param>
+/// <param name="Limit">The maximum number of result rows to return.</param>
 internal sealed record CsvJoinQuery(
     string LeftAlias,
     string LeftJoinField,
     string RightAlias,
     string RightJoinField,
     JoinType JoinType,
-    IReadOnlyList<SelectColumn> SelectColumns)
+    IReadOnlyList<SelectColumn> SelectColumns,
+    bool IsDistinct = false,
+    IReadOnlyList<OrderByColumn>? OrderByColumns = null,
+    int? Limit = null)
 {
     /// <summary>
     /// Resolves a query alias to a join side.
@@ -61,6 +67,13 @@ internal sealed record CsvJoinQuery(
             boundColumns.AddRange(source.Bind(selectColumn, sourceSide));
         }
 
-        return new BoundJoinQuery(JoinType, leftJoinHeader, rightJoinHeader, boundColumns);
+        return new BoundJoinQuery(
+            JoinType,
+            leftJoinHeader,
+            rightJoinHeader,
+            boundColumns,
+            IsDistinct,
+            OrderByColumns ?? [],
+            Limit);
     }
 }

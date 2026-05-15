@@ -244,6 +244,59 @@ public class CsvJoinProcessorTests
         result.Rows[0].Should().Equal("Ready");
     }
 
+    [Fact(DisplayName = "CsvJoinProcessor Process applies distinct order by and limit.")]
+    [Trait("Category", "Unit")]
+    public void ProcessAppliesDistinctOrderByAndLimit()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "Id",
+            JoinType.Inner,
+            [new SelectColumn("left", "Name", "Name"), new SelectColumn("right", "Score", "Score")],
+            IsDistinct: true,
+            OrderByColumns: [new OrderByColumn("Score", OrderByDirection.Descending), new OrderByColumn("Name", OrderByDirection.Ascending)],
+            Limit: 2);
+        var left = BuildDataSet("left", ["Id", "Name"], [["1", "Beta"], ["2", "Alpha"], ["3", "Beta"]]);
+        var right = BuildDataSet("right", ["Id", "Score"], [["1", "10"], ["2", "20"], ["3", "10"]]);
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().HaveCount(2);
+        result.Rows[0].Should().Equal("Alpha", "20");
+        result.Rows[1].Should().Equal("Beta", "10");
+    }
+
+    [Fact(DisplayName = "CsvJoinProcessor Process throws when order by column is missing.")]
+    [Trait("Category", "Unit")]
+    public void ProcessThrowsWhenOrderByColumnIsMissing()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "Id",
+            JoinType.Inner,
+            [new SelectColumn("left", "Name", "Name")],
+            OrderByColumns: [new OrderByColumn("Score", OrderByDirection.Ascending)]);
+        var left = BuildDataSet("left", ["Id", "Name"], [["1", "Alpha"]]);
+        var right = BuildDataSet("right", ["Id", "Score"], [["1", "20"]]);
+
+        // Act
+        Action action = () => _ = sut.Process(query, left, right);
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>()
+            .WithMessage("*ORDER BY column 'Score'*");
+    }
+
     [Fact(DisplayName = "CsvJoinProcessor Process throws when selected column is missing.")]
     [Trait("Category", "Unit")]
     public void ProcessThrowsWhenSelectedColumnIsMissing()

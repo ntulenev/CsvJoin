@@ -13,8 +13,19 @@ public class CsvJoinQueryTests
         // Arrange
         var columns = new[] { new SelectColumn("left", "Id", "Id") };
 
+        var orderByColumns = new[] { new OrderByColumn("Id", OrderByDirection.Descending) };
+
         // Act
-        var sut = new CsvJoinQuery("left", "Id", "right", "ExternalId", JoinType.Full, columns);
+        var sut = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "ExternalId",
+            JoinType.Full,
+            columns,
+            IsDistinct: true,
+            OrderByColumns: orderByColumns,
+            Limit: 5);
 
         // Assert
         sut.LeftAlias.Should().Be("left");
@@ -23,6 +34,9 @@ public class CsvJoinQueryTests
         sut.RightJoinField.Should().Be("ExternalId");
         sut.JoinType.Should().Be(JoinType.Full);
         sut.SelectColumns.Should().BeSameAs(columns);
+        sut.IsDistinct.Should().BeTrue();
+        sut.OrderByColumns.Should().BeSameAs(orderByColumns);
+        sut.Limit.Should().Be(5);
     }
 
     [Fact(DisplayName = "CsvJoinQuery ResolveSide returns left for left alias.")]

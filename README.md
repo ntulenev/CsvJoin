@@ -41,7 +41,7 @@ Example:
       "IgnoreBlankLines": true
     }
   },
-  "Query": "SELECT left.Id, left.Name, COALESCE(right.Status, 'Unknown') AS TargetStatus FROM left LEFT JOIN right ON left.Id = right.Id",
+  "Query": "SELECT DISTINCT left.Id, left.Name, COALESCE(right.Status, 'Unknown') AS TargetStatus FROM left LEFT JOIN right ON left.Id = right.Id ORDER BY TargetStatus ASC, Name ASC LIMIT 100",
   "JoinKeys": {
     "TrimWhitespace": true,
     "IgnoreCase": true
@@ -63,15 +63,20 @@ Supported query format:
 SELECT left.Id, COALESCE(right.[Full Name], 'Unknown') AS Name
 FROM left INNER|LEFT|RIGHT|FULL JOIN right
 ON left.Id = right.ExternalId
+ORDER BY Name ASC
+LIMIT 100
 ```
 
 Supported features:
 
+- `DISTINCT`
 - `INNER`, `LEFT`, `RIGHT`, `FULL`
 - field aliases via `AS`
 - per-column fallback values via `COALESCE(alias.Field, 'default')`
 - headers with spaces via brackets: `right.[Full Name]`
 - wildcard selection: `left.*`, `right.*`
+- sorting by output columns via `ORDER BY Column ASC|DESC`
+- result limits via `LIMIT n` or `TOP n`
 
 ## Run
 

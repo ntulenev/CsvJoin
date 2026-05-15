@@ -12,11 +12,17 @@ internal sealed class BoundJoinQuery
     /// <param name="leftJoinHeader">The concrete left join header.</param>
     /// <param name="rightJoinHeader">The concrete right join header.</param>
     /// <param name="selectColumns">The bound output columns.</param>
+    /// <param name="isDistinct">Indicates whether duplicate result rows should be removed.</param>
+    /// <param name="orderByColumns">The output columns used to sort result rows.</param>
+    /// <param name="limit">The maximum number of result rows to return.</param>
     public BoundJoinQuery(
         JoinType joinType,
         string leftJoinHeader,
         string rightJoinHeader,
-        IReadOnlyList<BoundSelectColumn> selectColumns)
+        IReadOnlyList<BoundSelectColumn> selectColumns,
+        bool isDistinct = false,
+        IReadOnlyList<OrderByColumn>? orderByColumns = null,
+        int? limit = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(leftJoinHeader);
         ArgumentException.ThrowIfNullOrWhiteSpace(rightJoinHeader);
@@ -27,6 +33,9 @@ internal sealed class BoundJoinQuery
         RightJoinHeader = rightJoinHeader;
         SelectColumns = EnsureUniqueOutputNames(selectColumns);
         Headers = SelectColumns.Select(static column => column.OutputField).ToArray();
+        IsDistinct = isDistinct;
+        OrderByColumns = BindOrderByColumns(orderByColumns ?? [], Headers);
+        Limit = limit;
     }
 
     /// <summary>
@@ -53,6 +62,21 @@ internal sealed class BoundJoinQuery
     /// Gets the final output headers.
     /// </summary>
     public IReadOnlyList<string> Headers { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether duplicate result rows should be removed.
+    /// </summary>
+    public bool IsDistinct { get; }
+
+    /// <summary>
+    /// Gets resolved output columns used to sort result rows.
+    /// </summary>
+    public IReadOnlyList<BoundOrderByColumn> OrderByColumns { get; }
+
+    /// <summary>
+    /// Gets the maximum number of result rows to return.
+    /// </summary>
+    public int? Limit { get; }
 
     /// <summary>
     /// Projects an output row from the provided join rows.
@@ -87,5 +111,33 @@ internal sealed class BoundJoinQuery
         outputNameUsage[baseName] = usage;
         var sourcePrefix = column.SourceSide == JoinSourceSide.Left ? "left" : "right";
         return $"{sourcePrefix}_{baseName}_{usage}";
+    }
+
+    private static BoundOrderByColumn[] BindOrderByColumns(
+        IReadOnlyList<OrderByColumn> orderByColumns,
+        IReadOnlyList<string> headers)
+    {
+        var resolvedColumns = new List<BoundOrderByColumn>();
+
+        foreach (var orderByColumn in orderByColumns)
+        {
+            var index = ResolveHeaderIndex(orderByColumn.OutputField, headers);
+            resolvedColumns.Add(new BoundOrderByColumn(headers[index], index, orderByColumn.Direction));
+        }
+
+        return resolvedColumns.ToArray();
+    }
+
+    private static int ResolveHeaderIndex(string outputField, IReadOnlyList<string> headers)
+    {
+        for (var index = 0; index < headers.Count; index++)
+        {
+            if (string.Equals(headers[index], outputField, StringComparison.OrdinalIgnoreCase))
+            {
+                return index;
+            }
+        }
+
+        throw new InvalidOperationException($"ORDER BY column '{outputField}' was not found in result columns.");
     }
 }

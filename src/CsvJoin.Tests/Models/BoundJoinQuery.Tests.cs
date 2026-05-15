@@ -14,7 +14,14 @@ public class BoundJoinQueryTests
         var columns = new[] { new BoundSelectColumn(JoinSourceSide.Left, "Id", "Id") };
 
         // Act
-        var sut = new BoundJoinQuery(JoinType.Left, "Id", "ExternalId", columns);
+        var sut = new BoundJoinQuery(
+            JoinType.Left,
+            "Id",
+            "ExternalId",
+            columns,
+            isDistinct: true,
+            orderByColumns: [new OrderByColumn("Id", OrderByDirection.Descending)],
+            limit: 5);
 
         // Assert
         sut.JoinType.Should().Be(JoinType.Left);
@@ -22,6 +29,11 @@ public class BoundJoinQueryTests
         sut.RightJoinHeader.Should().Be("ExternalId");
         sut.SelectColumns.Should().HaveCount(1);
         sut.Headers.Should().Equal("Id");
+        sut.IsDistinct.Should().BeTrue();
+        sut.OrderByColumns.Should().ContainSingle();
+        sut.OrderByColumns[0].Index.Should().Be(0);
+        sut.OrderByColumns[0].Direction.Should().Be(OrderByDirection.Descending);
+        sut.Limit.Should().Be(5);
     }
 
     [Fact(DisplayName = "BoundJoinQuery makes duplicate output names unique.")]

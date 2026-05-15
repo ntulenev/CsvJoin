@@ -75,6 +75,71 @@ public class CsvJoinQueryParserTests
         result.SelectColumns[0].DefaultValue.Should().Be("Can't map");
     }
 
+    [Fact(DisplayName = "CsvJoinQueryParser Parse supports distinct order by and limit.")]
+    [Trait("Category", "Unit")]
+    public void ParseSupportsDistinctOrderByAndLimit()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        var result = sut.Parse("SELECT DISTINCT left.Id, right.Status FROM left LEFT JOIN right ON left.Id = right.Id ORDER BY Status DESC, Id ASC LIMIT 10");
+
+        // Assert
+        result.IsDistinct.Should().BeTrue();
+        result.Limit.Should().Be(10);
+        result.OrderByColumns.Should().NotBeNull();
+        result.OrderByColumns!.Should().HaveCount(2);
+        result.OrderByColumns[0].OutputField.Should().Be("Status");
+        result.OrderByColumns[0].Direction.Should().Be(OrderByDirection.Descending);
+        result.OrderByColumns[1].OutputField.Should().Be("Id");
+        result.OrderByColumns[1].Direction.Should().Be(OrderByDirection.Ascending);
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse supports top limit.")]
+    [Trait("Category", "Unit")]
+    public void ParseSupportsTopLimit()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        var result = sut.Parse("SELECT TOP 5 left.Id FROM left INNER JOIN right ON left.Id = right.Id");
+
+        // Assert
+        result.Limit.Should().Be(5);
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when top and limit are both used.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenTopAndLimitAreBothUsed()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT TOP 5 left.Id FROM left INNER JOIN right ON left.Id = right.Id LIMIT 10");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*TOP or LIMIT*");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when order by expression is invalid.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenOrderByExpressionIsInvalid()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT left.Id FROM left INNER JOIN right ON left.Id = right.Id ORDER BY left.Id");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*ORDER BY expression*");
+    }
+
     [Fact(DisplayName = "CsvJoinQueryParser Parse throws for invalid query.")]
     [Trait("Category", "Unit")]
     public void ParseThrowsForInvalidQuery()
