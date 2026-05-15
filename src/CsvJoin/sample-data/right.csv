@@ -1,4 +1,7 @@
 Id,Status,Score
 1,Active,100
-3,Pending,70
+ 2 ,N/A,85
+3,"Pending, Review",70
+
 4,Blocked,20
+5,,95
