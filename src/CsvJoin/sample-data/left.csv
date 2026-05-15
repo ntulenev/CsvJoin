@@ -1,12 +1,12 @@
-Id,Name,Country
- 1 ,"Alice, A.",Germany
-1,"Alice, A.",Germany
-2,Bob,N/A
+Id,Name,Country,IncludeInReport
+ 1 ,"Alice, A.",Germany,yes
+1,"Alice, A.",Germany,yes
+2,Bob,N/A,no
 
-4,Diana,
- 5 , Evan ,Portugal
-6,Frank,Italy
-7,Grace,Poland
-8,"Helen, H.",N/A
-9,Ivan,Czechia
-10,Judy,Sweden
+4,Diana,,yes
+ 5 , Evan ,Portugal,yes
+6,Frank,Italy,no
+7,Grace,Poland,yes
+8,"Helen, H.",N/A,yes
+9,Ivan,Czechia,yes
+10,Judy,Sweden,no

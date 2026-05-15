@@ -1,12 +1,12 @@
-Id,Status,Score
-1,Active,100
- 2 ,N/A,85
-3,"Pending, Review",70
+Id,Status,Score,Publish
+1,Active,100,yes
+ 2 ,N/A,85,yes
+3,"Pending, Review",70,no
 
-4,Blocked,20
-5,,95
-6,Active,88
-7,Blocked,42
-8,"Pending, Review",73
-9,Active,91
-10,Done,99
+4,Blocked,20,no
+5,,95,yes
+6,Active,88,yes
+7,Blocked,42,yes
+8,"Pending, Review",73,no
+9,Active,91,yes
+10,Done,99,yes
