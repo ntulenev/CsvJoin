@@ -15,7 +15,7 @@ The project follows the same high-level approach as `NReleaseBuilder`:
 
 ## Configuration
 
-Main configuration lives in [src/CsvJoin/appsettings.json](C:\Users\ntyulenev\Documents\Code\CsvJoin\src\CsvJoin\appsettings.json).
+Main configuration lives in [src/CsvJoin/appsettings.json](src/CsvJoin/appsettings.json).
 
 Example:
 
