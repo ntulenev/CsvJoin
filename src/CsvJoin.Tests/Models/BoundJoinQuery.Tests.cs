@@ -12,6 +12,7 @@ public class BoundJoinQueryTests
     {
         // Arrange
         var columns = new[] { new BoundSelectColumn(JoinSourceSide.Left, "Id", "Id") };
+        var filters = new[] { new BoundSourceFilter(JoinSourceSide.Left, "Status", SourceFilterOperator.IsNotNull) };
 
         // Act
         var sut = new BoundJoinQuery(
@@ -19,6 +20,7 @@ public class BoundJoinQueryTests
             "Id",
             "ExternalId",
             columns,
+            sourceFilters: filters,
             isDistinct: true,
             orderByColumns: [new OrderByColumn("Id", OrderByDirection.Descending)],
             limit: 5);
@@ -29,6 +31,7 @@ public class BoundJoinQueryTests
         sut.RightJoinHeader.Should().Be("ExternalId");
         sut.SelectColumns.Should().HaveCount(1);
         sut.Headers.Should().Equal("Id");
+        sut.SourceFilters.Should().BeSameAs(filters);
         sut.IsDistinct.Should().BeTrue();
         sut.OrderByColumns.Should().ContainSingle();
         sut.OrderByColumns[0].Index.Should().Be(0);

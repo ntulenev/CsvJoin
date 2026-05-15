@@ -32,9 +32,29 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
         ArgumentNullException.ThrowIfNull(joinKeys);
 
         var boundQuery = query.Bind(left, right);
-        var rows = ApplyResultOptions(BuildRows(boundQuery, left, right, joinKeys), boundQuery);
+        var filteredLeft = ApplySourceFilters(left, boundQuery, JoinSourceSide.Left);
+        var filteredRight = ApplySourceFilters(right, boundQuery, JoinSourceSide.Right);
+        var rows = ApplyResultOptions(BuildRows(boundQuery, filteredLeft, filteredRight, joinKeys), boundQuery);
 
         return new CsvJoinResult(left.FilePath, right.FilePath, boundQuery.Headers, rows);
+    }
+
+    private static CsvDataSet ApplySourceFilters(CsvDataSet source, BoundJoinQuery query, JoinSourceSide sourceSide)
+    {
+        var filters = query.SourceFilters
+            .Where(filter => filter.SourceSide == sourceSide)
+            .ToArray();
+
+        if (filters.Length == 0)
+        {
+            return source;
+        }
+
+        var rows = source.Rows
+            .Where(row => filters.All(filter => filter.Matches(row)))
+            .ToArray();
+
+        return new CsvDataSet(source.Alias, source.FilePath, source.Headers, rows);
     }
 
     private static List<IReadOnlyList<string?>> BuildRows(

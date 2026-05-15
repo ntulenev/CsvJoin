@@ -96,6 +96,28 @@ public class CsvJoinQueryParserTests
         result.OrderByColumns[1].Direction.Should().Be(OrderByDirection.Ascending);
     }
 
+    [Fact(DisplayName = "CsvJoinQueryParser Parse supports where source filters.")]
+    [Trait("Category", "Unit")]
+    public void ParseSupportsWhereSourceFilters()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        var result = sut.Parse("SELECT left.Id, right.Status FROM left LEFT JOIN right ON left.Id = right.Id WHERE left.Name != 'Bob''s' AND right.Status IS NOT NULL ORDER BY Status ASC LIMIT 5");
+
+        // Assert
+        result.SourceFilters.Should().NotBeNull();
+        result.SourceFilters!.Should().HaveCount(2);
+        result.SourceFilters[0].SourceAlias.Should().Be("left");
+        result.SourceFilters[0].SourceField.Should().Be("Name");
+        result.SourceFilters[0].Operator.Should().Be(SourceFilterOperator.NotEquals);
+        result.SourceFilters[0].Value.Should().Be("Bob's");
+        result.SourceFilters[1].SourceAlias.Should().Be("right");
+        result.SourceFilters[1].SourceField.Should().Be("Status");
+        result.SourceFilters[1].Operator.Should().Be(SourceFilterOperator.IsNotNull);
+    }
+
     [Fact(DisplayName = "CsvJoinQueryParser Parse supports top limit.")]
     [Trait("Category", "Unit")]
     public void ParseSupportsTopLimit()
@@ -138,6 +160,21 @@ public class CsvJoinQueryParserTests
         // Assert
         action.Should().Throw<FormatException>()
             .WithMessage("*ORDER BY expression*");
+    }
+
+    [Fact(DisplayName = "CsvJoinQueryParser Parse throws when where expression is invalid.")]
+    [Trait("Category", "Unit")]
+    public void ParseThrowsWhenWhereExpressionIsInvalid()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        Action action = () => _ = sut.Parse("SELECT left.Id FROM left INNER JOIN right ON left.Id = right.Id WHERE left.Id LIKE '1'");
+
+        // Assert
+        action.Should().Throw<FormatException>()
+            .WithMessage("*WHERE expression*");
     }
 
     [Fact(DisplayName = "CsvJoinQueryParser Parse throws for invalid query.")]

@@ -209,6 +209,7 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
     {
         "AS",
         "ASC",
+        "AND",
         "BY",
         "DESC",
         "DISTINCT",
@@ -218,6 +219,9 @@ internal sealed class SpectreConsoleOutputRenderer : IConsoleOutputRenderer
         "JOIN",
         "LEFT",
         "LIMIT",
+        "IS",
+        "NOT",
+        "NULL",
         "ON",
         "ORDER",
         "RIGHT",

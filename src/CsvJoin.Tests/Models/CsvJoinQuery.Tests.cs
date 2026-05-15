@@ -14,6 +14,7 @@ public class CsvJoinQueryTests
         var columns = new[] { new SelectColumn("left", "Id", "Id") };
 
         var orderByColumns = new[] { new OrderByColumn("Id", OrderByDirection.Descending) };
+        var sourceFilters = new[] { new SourceFilter("left", "Status", SourceFilterOperator.IsNotNull) };
 
         // Act
         var sut = new CsvJoinQuery(
@@ -23,6 +24,7 @@ public class CsvJoinQueryTests
             "ExternalId",
             JoinType.Full,
             columns,
+            SourceFilters: sourceFilters,
             IsDistinct: true,
             OrderByColumns: orderByColumns,
             Limit: 5);
@@ -34,6 +36,7 @@ public class CsvJoinQueryTests
         sut.RightJoinField.Should().Be("ExternalId");
         sut.JoinType.Should().Be(JoinType.Full);
         sut.SelectColumns.Should().BeSameAs(columns);
+        sut.SourceFilters.Should().BeSameAs(sourceFilters);
         sut.IsDistinct.Should().BeTrue();
         sut.OrderByColumns.Should().BeSameAs(orderByColumns);
         sut.Limit.Should().Be(5);

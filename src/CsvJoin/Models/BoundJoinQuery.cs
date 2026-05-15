@@ -12,6 +12,7 @@ internal sealed class BoundJoinQuery
     /// <param name="leftJoinHeader">The concrete left join header.</param>
     /// <param name="rightJoinHeader">The concrete right join header.</param>
     /// <param name="selectColumns">The bound output columns.</param>
+    /// <param name="sourceFilters">The bound source row filters applied before joining.</param>
     /// <param name="isDistinct">Indicates whether duplicate result rows should be removed.</param>
     /// <param name="orderByColumns">The output columns used to sort result rows.</param>
     /// <param name="limit">The maximum number of result rows to return.</param>
@@ -20,6 +21,7 @@ internal sealed class BoundJoinQuery
         string leftJoinHeader,
         string rightJoinHeader,
         IReadOnlyList<BoundSelectColumn> selectColumns,
+        IReadOnlyList<BoundSourceFilter>? sourceFilters = null,
         bool isDistinct = false,
         IReadOnlyList<OrderByColumn>? orderByColumns = null,
         int? limit = null)
@@ -33,6 +35,7 @@ internal sealed class BoundJoinQuery
         RightJoinHeader = rightJoinHeader;
         SelectColumns = EnsureUniqueOutputNames(selectColumns);
         Headers = SelectColumns.Select(static column => column.OutputField).ToArray();
+        SourceFilters = sourceFilters ?? [];
         IsDistinct = isDistinct;
         OrderByColumns = BindOrderByColumns(orderByColumns ?? [], Headers);
         Limit = limit;
@@ -62,6 +65,11 @@ internal sealed class BoundJoinQuery
     /// Gets the final output headers.
     /// </summary>
     public IReadOnlyList<string> Headers { get; }
+
+    /// <summary>
+    /// Gets bound source row filters applied before joining.
+    /// </summary>
+    public IReadOnlyList<BoundSourceFilter> SourceFilters { get; }
 
     /// <summary>
     /// Gets a value indicating whether duplicate result rows should be removed.
