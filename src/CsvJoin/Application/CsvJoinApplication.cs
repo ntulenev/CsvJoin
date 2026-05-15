@@ -52,7 +52,11 @@ internal sealed class CsvJoinApplication : ICsvJoinApplication
 
         await Task.WhenAll(leftTask, rightTask).ConfigureAwait(false);
 
-        var result = _csvJoinProcessor.Process(_configuredJoinJob.Query, await leftTask.ConfigureAwait(false), await rightTask.ConfigureAwait(false));
+        var result = _csvJoinProcessor.Process(
+            _configuredJoinJob.Query,
+            await leftTask.ConfigureAwait(false),
+            await rightTask.ConfigureAwait(false),
+            _configuredJoinJob.JoinKeys);
         _consoleOutputRenderer.RenderResult(result, _configuredJoinJob.Output.ConsoleMaxRows);
 
         var outputFile = await _resultFileWriter.WriteAsync(result, _configuredJoinJob.Output, cancellationToken).ConfigureAwait(false);

@@ -23,6 +23,11 @@ public class ConfiguredJoinJobBinderTests
                 ["right"] = new CsvSourceOptions { FilePath = rightCsv.Path, Delimiter = ";" },
             },
             Query = "SELECT left.Id, right.Status FROM left LEFT JOIN right ON left.Id = right.Id",
+            JoinKeys = new JoinKeyOptions
+            {
+                TrimWhitespace = true,
+                IgnoreCase = true,
+            },
             Output = new OutputOptions
             {
                 ResultsDirectory = "results",
@@ -42,6 +47,8 @@ public class ConfiguredJoinJobBinderTests
         result.Job!.Query.LeftAlias.Should().Be("left");
         result.Job.LeftSource.FilePath.Should().Be(leftCsv.Path);
         result.Job.RightSource.Delimiter.Should().Be(";");
+        result.Job.JoinKeys.TrimWhitespace.Should().BeTrue();
+        result.Job.JoinKeys.IgnoreCase.Should().BeTrue();
         result.Job.Output.Delimiter.Should().Be("|");
         result.Job.Output.OpenResultAfterBuild.Should().BeFalse();
         result.Errors.Should().BeEmpty();

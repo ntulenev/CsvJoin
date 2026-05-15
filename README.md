@@ -24,14 +24,28 @@ Example:
   "Sources": {
     "left": {
       "FilePath": "sample-data\\left.csv",
-      "Delimiter": ","
+      "Delimiter": ",",
+      "Encoding": "utf-8",
+      "TrimFields": true,
+      "NullValues": [ "", "N/A" ],
+      "Quote": "\"",
+      "IgnoreBlankLines": true
     },
     "right": {
       "FilePath": "sample-data\\right.csv",
-      "Delimiter": ","
+      "Delimiter": ",",
+      "Encoding": "utf-8",
+      "TrimFields": true,
+      "NullValues": [ "", "N/A" ],
+      "Quote": "\"",
+      "IgnoreBlankLines": true
     }
   },
   "Query": "SELECT left.Id, left.Name, COALESCE(right.Status, 'Unknown') AS TargetStatus FROM left LEFT JOIN right ON left.Id = right.Id",
+  "JoinKeys": {
+    "TrimWhitespace": true,
+    "IgnoreCase": true
+  },
   "Output": {
     "ResultsDirectory": "results",
     "Delimiter": ",",
@@ -70,6 +84,12 @@ dotnet run --project .\src\CsvJoin
 - result is rendered to the console
 - full CSV is written to `results\<file1>_<file2>_<timestamp>.csv`
 - when `OpenResultAfterBuild` is `true`, the result file is opened via shell
+
+## CSV input options
+
+Each source can configure `Encoding`, `TrimFields`, `NullValues`, `Quote`, and `IgnoreBlankLines`.
+
+`JoinKeys` controls matching only: `TrimWhitespace` removes leading/trailing spaces from join keys, and `IgnoreCase` makes key comparison case-insensitive.
 
 ## Tests
 

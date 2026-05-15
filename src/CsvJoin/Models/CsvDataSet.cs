@@ -84,16 +84,28 @@ internal sealed class CsvDataSet
     /// </summary>
     /// <param name="joinHeader">The join header to use as key.</param>
     /// <returns>A lookup of join keys to matching dataset rows.</returns>
-    public IReadOnlyDictionary<string, IReadOnlyList<CsvDataRow>> BuildLookup(string joinHeader)
+    public IReadOnlyDictionary<string, IReadOnlyList<CsvDataRow>> BuildLookup(string joinHeader) =>
+        BuildLookup(joinHeader, new JoinKeyNormalizationSettings(false, false));
+
+    /// <summary>
+    /// Builds a lookup for rows grouped by the specified join header.
+    /// </summary>
+    /// <param name="joinHeader">The join header to use as key.</param>
+    /// <param name="normalization">The join key normalization settings.</param>
+    /// <returns>A lookup of join keys to matching dataset rows.</returns>
+    public IReadOnlyDictionary<string, IReadOnlyList<CsvDataRow>> BuildLookup(
+        string joinHeader,
+        JoinKeyNormalizationSettings normalization)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(joinHeader);
+        ArgumentNullException.ThrowIfNull(normalization);
 
         var resolvedHeader = ResolveHeader(joinHeader);
-        var lookup = new Dictionary<string, List<CsvDataRow>>(StringComparer.Ordinal);
+        var lookup = new Dictionary<string, List<CsvDataRow>>(normalization.Comparer);
 
         foreach (var row in Rows)
         {
-            var joinKey = row.GetJoinKey(resolvedHeader);
+            var joinKey = row.GetJoinKey(resolvedHeader, normalization);
             if (!lookup.TryGetValue(joinKey, out var bucket))
             {
                 bucket = [];
@@ -103,7 +115,7 @@ internal sealed class CsvDataSet
             bucket.Add(row);
         }
 
-        return lookup.ToDictionary(static entry => entry.Key, static entry => (IReadOnlyList<CsvDataRow>)entry.Value, StringComparer.Ordinal);
+        return lookup.ToDictionary(static entry => entry.Key, static entry => (IReadOnlyList<CsvDataRow>)entry.Value, normalization.Comparer);
     }
 
     private readonly Dictionary<string, string> _headerLookup;

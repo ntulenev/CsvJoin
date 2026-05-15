@@ -47,6 +47,7 @@ internal sealed class ConfiguredJoinJobSettingsBinder : IConfiguredJoinJobSettin
             query,
             new ConfiguredCsvSource(query.LeftAlias, leftSource),
             new ConfiguredCsvSource(query.RightAlias, rightSource),
+            new JoinKeyNormalizationSettings(settings.JoinKeys.TrimWhitespace, settings.JoinKeys.IgnoreCase),
             output);
 
         return new ConfiguredJoinJobBindingResult(job, errors);
@@ -92,6 +93,20 @@ internal sealed class ConfiguredJoinJobSettingsBinder : IConfiguredJoinJobSettin
             if (string.IsNullOrWhiteSpace(source.Delimiter))
             {
                 errors.Add($"Sources:{alias}:Delimiter is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(source.Encoding))
+            {
+                errors.Add($"Sources:{alias}:Encoding is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(source.Quote))
+            {
+                errors.Add($"Sources:{alias}:Quote is required.");
+            }
+            else if (source.Quote.Length != 1)
+            {
+                errors.Add($"Sources:{alias}:Quote must be exactly one character.");
             }
         }
     }

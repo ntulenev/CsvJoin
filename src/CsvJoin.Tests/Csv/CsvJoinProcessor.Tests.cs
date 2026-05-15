@@ -225,6 +225,25 @@ public class CsvJoinProcessorTests
         result.Rows[3].Should().Equal("L2", "R2");
     }
 
+    [Fact(DisplayName = "CsvJoinProcessor Process normalizes join keys when configured.")]
+    [Trait("Category", "Unit")]
+    public void ProcessNormalizesJoinKeysWhenConfigured()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery("left", "Code", "right", "Code", JoinType.Inner, [new SelectColumn("right", "Status", "Status")]);
+        var left = BuildDataSet("left", ["Code"], [[" abc "]]);
+        var right = BuildDataSet("right", ["Code", "Status"], [["ABC", "Ready"]]);
+        var joinKeys = new JoinKeyNormalizationSettings(TrimWhitespace: true, IgnoreCase: true);
+
+        // Act
+        var result = sut.Process(query, left, right, joinKeys);
+
+        // Assert
+        result.Rows.Should().ContainSingle();
+        result.Rows[0].Should().Equal("Ready");
+    }
+
     [Fact(DisplayName = "CsvJoinProcessor Process throws when selected column is missing.")]
     [Trait("Category", "Unit")]
     public void ProcessThrowsWhenSelectedColumnIsMissing()

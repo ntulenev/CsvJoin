@@ -6,9 +6,9 @@ namespace CsvJoin.Tests.Configuration;
 
 public class CsvSourceOptionsTests
 {
-    [Fact(DisplayName = "CsvSourceOptions has expected default delimiter.")]
+    [Fact(DisplayName = "CsvSourceOptions has expected default values.")]
     [Trait("Category", "Unit")]
-    public void CsvSourceOptionsHasExpectedDefaultDelimiter()
+    public void CsvSourceOptionsHasExpectedDefaultValues()
     {
         // Arrange
         var sut = new CsvSourceOptions { FilePath = "file.csv" };
@@ -18,5 +18,10 @@ public class CsvSourceOptionsTests
 
         // Assert
         delimiter.Should().Be(",");
+        sut.Encoding.Should().Be("utf-8");
+        sut.TrimFields.Should().BeFalse();
+        sut.NullValues.Should().BeEmpty();
+        sut.Quote.Should().Be("\"");
+        sut.IgnoreBlankLines.Should().BeTrue();
     }
 }

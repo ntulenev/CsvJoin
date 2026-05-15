@@ -22,6 +22,11 @@ internal sealed class AppSettings
     public required string Query { get; init; }
 
     /// <summary>
+    /// Gets join key normalization settings.
+    /// </summary>
+    public JoinKeyOptions JoinKeys { get; init; } = new();
+
+    /// <summary>
     /// Gets the output settings for the generated result.
     /// </summary>
     [Required]

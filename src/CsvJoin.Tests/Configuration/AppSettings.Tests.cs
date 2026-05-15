@@ -15,10 +15,14 @@ public class AppSettingsTests
 
         // Act
         var sources = sut.Sources;
+        var joinKeys = sut.JoinKeys;
         var output = sut.Output;
 
         // Assert
         sources.Should().NotBeNull().And.BeEmpty();
+        joinKeys.Should().NotBeNull();
+        joinKeys.TrimWhitespace.Should().BeFalse();
+        joinKeys.IgnoreCase.Should().BeFalse();
         output.Should().NotBeNull();
     }
 }

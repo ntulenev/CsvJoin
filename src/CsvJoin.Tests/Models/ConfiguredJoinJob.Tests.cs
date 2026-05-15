@@ -15,15 +15,17 @@ public class ConfiguredJoinJobTests
         var query = new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, []);
         var leftSource = new ConfiguredCsvSource("left", new CsvSourceOptions { FilePath = "left.csv", Delimiter = "," });
         var rightSource = new ConfiguredCsvSource("right", new CsvSourceOptions { FilePath = "right.csv", Delimiter = "," });
+        var joinKeys = new JoinKeyNormalizationSettings(true, true);
         var output = new JoinOutputSettings("results", ",", 10, true);
 
         // Act
-        var sut = new ConfiguredJoinJob(query, leftSource, rightSource, output);
+        var sut = new ConfiguredJoinJob(query, leftSource, rightSource, joinKeys, output);
 
         // Assert
         sut.Query.Should().BeSameAs(query);
         sut.LeftSource.Should().BeSameAs(leftSource);
         sut.RightSource.Should().BeSameAs(rightSource);
+        sut.JoinKeys.Should().BeSameAs(joinKeys);
         sut.Output.Should().BeSameAs(output);
     }
 
@@ -36,6 +38,7 @@ public class ConfiguredJoinJobTests
             new CsvJoinQuery("left", "Id", "right", "Id", JoinType.Inner, []),
             new ConfiguredCsvSource("left", new CsvSourceOptions { FilePath = "left.csv", Delimiter = "," }),
             new ConfiguredCsvSource("right", new CsvSourceOptions { FilePath = "right.csv", Delimiter = ";" }),
+            new JoinKeyNormalizationSettings(false, false),
             new JoinOutputSettings("results", ",", 10, false));
 
         // Act

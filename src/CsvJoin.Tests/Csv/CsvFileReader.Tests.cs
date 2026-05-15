@@ -1,3 +1,5 @@
+using System.Text;
+
 using FluentAssertions;
 
 using CsvJoin.Configuration;
@@ -140,5 +142,78 @@ public class CsvFileReaderTests
 
         // Assert
         result.Rows[0].Values["Name"].Should().Be("Alice, Bob");
+    }
+
+    [Fact(DisplayName = "CsvFileReader ReadAsync supports configured encoding.")]
+    [Trait("Category", "Unit")]
+    public async Task ReadAsyncSupportsConfiguredEncoding()
+    {
+        // Arrange
+        using var csvFile = TempCsvFile.Create("Id,Name\n1,Женя\n", Encoding.Unicode);
+        var sut = new CsvFileReader();
+        var source = new CsvSourceOptions { FilePath = csvFile.Path, Encoding = "utf-16" };
+
+        // Act
+        var result = await sut.ReadAsync("left", source, CancellationToken.None);
+
+        // Assert
+        result.Rows[0].Values["Name"].Should().Be("Женя");
+    }
+
+    [Fact(DisplayName = "CsvFileReader ReadAsync trims fields and maps configured null values.")]
+    [Trait("Category", "Unit")]
+    public async Task ReadAsyncTrimsFieldsAndMapsConfiguredNullValues()
+    {
+        // Arrange
+        using var csvFile = TempCsvFile.Create("Id,Name,Status\n 1 , Alice , N/A \n");
+        var sut = new CsvFileReader();
+        var source = new CsvSourceOptions
+        {
+            FilePath = csvFile.Path,
+            TrimFields = true,
+            NullValues = ["N/A"],
+        };
+
+        // Act
+        var result = await sut.ReadAsync("left", source, CancellationToken.None);
+
+        // Assert
+        result.Rows[0].Values["Id"].Should().Be("1");
+        result.Rows[0].Values["Name"].Should().Be("Alice");
+        result.Rows[0].Values["Status"].Should().BeNull();
+    }
+
+    [Fact(DisplayName = "CsvFileReader ReadAsync supports configured quote character.")]
+    [Trait("Category", "Unit")]
+    public async Task ReadAsyncSupportsConfiguredQuoteCharacter()
+    {
+        // Arrange
+        using var csvFile = TempCsvFile.Create("Id,Name\n1,'Alice, Bob'\n");
+        var sut = new CsvFileReader();
+        var source = new CsvSourceOptions { FilePath = csvFile.Path, Quote = "'" };
+
+        // Act
+        var result = await sut.ReadAsync("left", source, CancellationToken.None);
+
+        // Assert
+        result.Rows[0].Values["Name"].Should().Be("Alice, Bob");
+    }
+
+    [Fact(DisplayName = "CsvFileReader ReadAsync can keep blank lines.")]
+    [Trait("Category", "Unit")]
+    public async Task ReadAsyncCanKeepBlankLines()
+    {
+        // Arrange
+        using var csvFile = TempCsvFile.Create("Id,Name\n1,Alice\n,\n2,Bob\n");
+        var sut = new CsvFileReader();
+        var source = new CsvSourceOptions { FilePath = csvFile.Path, IgnoreBlankLines = false };
+
+        // Act
+        var result = await sut.ReadAsync("left", source, CancellationToken.None);
+
+        // Assert
+        result.Rows.Should().HaveCount(3);
+        result.Rows[1].Values["Id"].Should().BeEmpty();
+        result.Rows[1].Values["Name"].Should().BeEmpty();
     }
 }

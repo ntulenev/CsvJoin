@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -21,13 +22,16 @@ internal sealed class CsvFileReader : ICsvFileReader
         ArgumentNullException.ThrowIfNull(source);
 
         using var stream = File.OpenRead(source.FilePath);
-        using var textReader = new StreamReader(stream);
+        using var textReader = new StreamReader(stream, ResolveEncoding(source.Encoding), detectEncodingFromByteOrderMarks: true);
         var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = source.Delimiter,
             HasHeaderRecord = true,
             BadDataFound = null,
+            IgnoreBlankLines = source.IgnoreBlankLines,
             MissingFieldFound = null,
+            Quote = source.Quote[0],
+            TrimOptions = source.TrimFields ? TrimOptions.Trim : TrimOptions.None,
         };
 
         using var csv = new CsvReader(textReader, configuration);
@@ -55,7 +59,7 @@ internal sealed class CsvFileReader : ICsvFileReader
             var values = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
             foreach (var header in headers)
             {
-                values[header] = csv.GetField(header);
+                values[header] = NormalizeField(csv.GetField(header), source.NullValues);
             }
 
             rows.Add(new CsvDataRow(rowIndex, values));
@@ -63,6 +67,28 @@ internal sealed class CsvFileReader : ICsvFileReader
         }
 
         return new CsvDataSet(alias, source.FilePath, headers, rows);
+    }
+
+    private static Encoding ResolveEncoding(string encodingName)
+    {
+        try
+        {
+            return Encoding.GetEncoding(encodingName);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidOperationException($"CSV source encoding '{encodingName}' is not supported.", exception);
+        }
+    }
+
+    private static string? NormalizeField(string? value, IReadOnlyList<string> nullValues)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        return nullValues.Contains(value, StringComparer.Ordinal) ? null : value;
     }
 
     private static void ValidateDuplicateHeaders(string alias, IReadOnlyList<string> headers)

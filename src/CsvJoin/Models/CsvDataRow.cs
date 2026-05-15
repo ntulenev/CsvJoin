@@ -12,10 +12,20 @@ internal sealed record CsvDataRow(int Index, IReadOnlyDictionary<string, string?
     /// </summary>
     /// <param name="header">The header that provides the join value.</param>
     /// <returns>The join key, or an empty string when no value exists.</returns>
-    public string GetJoinKey(string header)
+    public string GetJoinKey(string header) =>
+        GetJoinKey(header, new JoinKeyNormalizationSettings(false, false));
+
+    /// <summary>
+    /// Gets the normalized join key for the specified header.
+    /// </summary>
+    /// <param name="header">The header that provides the join value.</param>
+    /// <param name="normalization">The join key normalization settings.</param>
+    /// <returns>The join key, or an empty string when no value exists.</returns>
+    public string GetJoinKey(string header, JoinKeyNormalizationSettings normalization)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(header);
-        return Values.TryGetValue(header, out var value) ? value ?? string.Empty : string.Empty;
+        ArgumentNullException.ThrowIfNull(normalization);
+        return normalization.Normalize(Values.TryGetValue(header, out var value) ? value : null);
     }
 
     /// <summary>
