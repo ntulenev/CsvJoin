@@ -7,8 +7,6 @@ Console utility that reads two CSV files from `appsettings.json`, applies a SQL-
 
 ## Structure
 
-The project follows the same high-level approach as `NReleaseBuilder`:
-
 - `src/CsvJoin` - application project
 - `Abstractions / Application / Configuration / Csv / Presentation / Models` - separated responsibilities
 - `src/CsvJoin.Tests` - unit tests for parser, join engine, and configuration validation
