@@ -63,6 +63,22 @@ internal sealed class CsvDataSet
     }
 
     /// <summary>
+    /// Binds a select column to this dataset with configured column types.
+    /// </summary>
+    /// <param name="selectColumn">The select column to bind.</param>
+    /// <param name="sourceSide">The join side represented by this dataset.</param>
+    /// <param name="columnTypes">The configured column data types.</param>
+    /// <returns>The bound output columns.</returns>
+    public IReadOnlyList<BoundSelectColumn> Bind(
+        SelectColumn selectColumn,
+        JoinSourceSide sourceSide,
+        ColumnTypeRegistry columnTypes)
+    {
+        ArgumentNullException.ThrowIfNull(selectColumn);
+        return selectColumn.Bind(this, sourceSide, columnTypes);
+    }
+
+    /// <summary>
     /// Resolves a configured header name to its actual dataset header.
     /// </summary>
     /// <param name="configuredHeader">The configured header reference.</param>

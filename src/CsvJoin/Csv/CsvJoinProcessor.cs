@@ -12,6 +12,14 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
     public CsvJoinResult Process(CsvJoinQuery query, CsvDataSet left, CsvDataSet right) =>
         Process(query, left, right, new JoinKeyNormalizationSettings(false, false));
 
+    /// <inheritdoc />
+    public CsvJoinResult Process(
+        CsvJoinQuery query,
+        CsvDataSet left,
+        CsvDataSet right,
+        JoinKeyNormalizationSettings joinKeys) =>
+        Process(query, left, right, joinKeys, ColumnTypeRegistry.Empty);
+
     /// <summary>
     /// Executes join queries against loaded CSV datasets using configured join key normalization.
     /// </summary>
@@ -19,19 +27,22 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
     /// <param name="left">The left dataset.</param>
     /// <param name="right">The right dataset.</param>
     /// <param name="joinKeys">The join key normalization settings.</param>
+    /// <param name="columnTypes">The configured column data types.</param>
     /// <returns>The join result.</returns>
     public CsvJoinResult Process(
         CsvJoinQuery query,
         CsvDataSet left,
         CsvDataSet right,
-        JoinKeyNormalizationSettings joinKeys)
+        JoinKeyNormalizationSettings joinKeys,
+        ColumnTypeRegistry columnTypes)
     {
         ArgumentNullException.ThrowIfNull(query);
         ArgumentNullException.ThrowIfNull(left);
         ArgumentNullException.ThrowIfNull(right);
         ArgumentNullException.ThrowIfNull(joinKeys);
+        ArgumentNullException.ThrowIfNull(columnTypes);
 
-        var boundQuery = query.Bind(left, right);
+        var boundQuery = query.Bind(left, right, columnTypes);
         var filteredLeft = ApplySourceFilters(left, boundQuery, JoinSourceSide.Left);
         var filteredRight = ApplySourceFilters(right, boundQuery, JoinSourceSide.Right);
         var joinResult = BuildRows(boundQuery, filteredLeft, filteredRight, joinKeys);
@@ -197,28 +208,32 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
         BoundOrderByColumn orderByColumn)
     {
         return orderByColumn.Direction == OrderByDirection.Descending
-            ? ApplyDescendingOrdering(rows, isFirstColumn, orderByColumn.Index)
-            : ApplyAscendingOrdering(rows, isFirstColumn, orderByColumn.Index);
+            ? ApplyDescendingOrdering(rows, isFirstColumn, orderByColumn.Index, orderByColumn.DataType)
+            : ApplyAscendingOrdering(rows, isFirstColumn, orderByColumn.Index, orderByColumn.DataType);
     }
 
     private static IOrderedEnumerable<IReadOnlyList<string?>> ApplyAscendingOrdering(
         IEnumerable<IReadOnlyList<string?>> rows,
         bool isFirstColumn,
-        int columnIndex)
+        int columnIndex,
+        ColumnDataType dataType)
     {
+        var comparer = new ColumnValueComparer(dataType);
         return isFirstColumn
-            ? rows.OrderBy(row => row[columnIndex], StringComparer.Ordinal)
-            : ((IOrderedEnumerable<IReadOnlyList<string?>>)rows).ThenBy(row => row[columnIndex], StringComparer.Ordinal);
+            ? rows.OrderBy(row => row[columnIndex], comparer)
+            : ((IOrderedEnumerable<IReadOnlyList<string?>>)rows).ThenBy(row => row[columnIndex], comparer);
     }
 
     private static IOrderedEnumerable<IReadOnlyList<string?>> ApplyDescendingOrdering(
         IEnumerable<IReadOnlyList<string?>> rows,
         bool isFirstColumn,
-        int columnIndex)
+        int columnIndex,
+        ColumnDataType dataType)
     {
+        var comparer = new ColumnValueComparer(dataType);
         return isFirstColumn
-            ? rows.OrderByDescending(row => row[columnIndex], StringComparer.Ordinal)
-            : ((IOrderedEnumerable<IReadOnlyList<string?>>)rows).ThenByDescending(row => row[columnIndex], StringComparer.Ordinal);
+            ? rows.OrderByDescending(row => row[columnIndex], comparer)
+            : ((IOrderedEnumerable<IReadOnlyList<string?>>)rows).ThenByDescending(row => row[columnIndex], comparer);
     }
 
     private sealed class RowValueComparer : IEqualityComparer<IReadOnlyList<string?>>
@@ -267,4 +282,9 @@ internal sealed class CsvJoinProcessor : ICsvJoinProcessor
         int MatchedRowPairs,
         int UnmatchedLeftRows,
         int UnmatchedRightRows);
+
+    private sealed class ColumnValueComparer(ColumnDataType dataType) : IComparer<string?>
+    {
+        public int Compare(string? x, string? y) => BoundSourceFilter.Compare(x, y, dataType);
+    }
 }

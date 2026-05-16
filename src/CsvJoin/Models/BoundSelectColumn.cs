@@ -7,11 +7,13 @@ namespace CsvJoin.Models;
 /// <param name="SourceField">The concrete source header name.</param>
 /// <param name="OutputField">The output column name.</param>
 /// <param name="DefaultValue">The fallback value used when the source value is missing.</param>
+/// <param name="DataType">The source column data type.</param>
 internal sealed record BoundSelectColumn(
     JoinSourceSide SourceSide,
     string SourceField,
     string OutputField,
-    string? DefaultValue = null)
+    string? DefaultValue = null,
+    ColumnDataType DataType = ColumnDataType.Text)
 {
     /// <summary>
     /// Projects a value from the provided join rows.

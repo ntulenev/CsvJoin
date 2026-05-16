@@ -8,6 +8,7 @@ namespace CsvJoin.Models;
 /// <param name="LeftSource">The configured left source.</param>
 /// <param name="RightSource">The configured right source.</param>
 /// <param name="JoinKeys">The configured join key normalization settings.</param>
+/// <param name="ColumnTypes">The configured source column data types.</param>
 /// <param name="Output">The configured output settings.</param>
 internal sealed record ConfiguredJoinJob(
     CsvJoinQuery Query,
@@ -15,6 +16,7 @@ internal sealed record ConfiguredJoinJob(
     ConfiguredCsvSource LeftSource,
     ConfiguredCsvSource RightSource,
     JoinKeyNormalizationSettings JoinKeys,
+    ColumnTypeRegistry ColumnTypes,
     JoinOutputSettings Output)
 {
     /// <summary>

@@ -27,6 +27,11 @@ internal sealed class AppSettings
     public JoinKeyOptions JoinKeys { get; init; } = new();
 
     /// <summary>
+    /// Gets configured source column types keyed by alias and field, for example <c>right.Score</c>.
+    /// </summary>
+    public Dictionary<string, string> ColumnTypes { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Gets the output settings for the generated result.
     /// </summary>
     [Required]

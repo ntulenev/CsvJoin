@@ -29,6 +29,7 @@ internal sealed class ConfiguredJoinJobSettingsBinder : IConfiguredJoinJobSettin
 
         ValidateSources(settings.Sources, errors);
         var query = ValidateAndParseQuery(settings.Query, settings.Sources, errors);
+        var columnTypes = ValidateColumnTypes(settings.ColumnTypes, settings.Sources, errors);
         var output = ValidateOutput(settings.Output, errors);
 
         if (query is null || output is null)
@@ -49,6 +50,7 @@ internal sealed class ConfiguredJoinJobSettingsBinder : IConfiguredJoinJobSettin
             new ConfiguredCsvSource(query.LeftAlias, leftSource),
             new ConfiguredCsvSource(query.RightAlias, rightSource),
             new JoinKeyNormalizationSettings(settings.JoinKeys.TrimWhitespace, settings.JoinKeys.IgnoreCase),
+            new ColumnTypeRegistry(columnTypes),
             output);
 
         return new ConfiguredJoinJobBindingResult(job, errors);
@@ -188,6 +190,89 @@ internal sealed class ConfiguredJoinJobSettingsBinder : IConfiguredJoinJobSettin
             output.Delimiter,
             output.ConsoleMaxRows,
             output.OpenResultAfterBuild);
+    }
+
+    private static Dictionary<string, ColumnDataType> ValidateColumnTypes(
+        Dictionary<string, string>? columnTypes,
+        Dictionary<string, CsvSourceOptions>? sources,
+        List<string> errors)
+    {
+        var result = new Dictionary<string, ColumnDataType>(StringComparer.OrdinalIgnoreCase);
+        if (columnTypes is null)
+        {
+            return result;
+        }
+
+        foreach (var (columnReference, rawDataType) in columnTypes)
+        {
+            if (!TryParseColumnReference(columnReference, out var alias, out var field))
+            {
+                errors.Add($"ColumnTypes key '{columnReference}' is invalid. Use alias.Field.");
+                continue;
+            }
+
+            if (sources is not null && !sources.ContainsKey(alias))
+            {
+                errors.Add($"ColumnTypes key '{columnReference}' references missing source alias '{alias}'.");
+            }
+
+            if (!TryParseColumnDataType(rawDataType, out var dataType))
+            {
+                errors.Add($"ColumnTypes:{columnReference} has unsupported type '{rawDataType}'. Use text, number, or date.");
+                continue;
+            }
+
+            result[$"{alias}.{field}"] = dataType;
+        }
+
+        return result;
+    }
+
+    private static bool TryParseColumnReference(string value, out string alias, out string field)
+    {
+        alias = string.Empty;
+        field = string.Empty;
+
+        var separatorIndex = value.AsSpan().IndexOf('.');
+        if (separatorIndex <= 0 || separatorIndex == value.Length - 1)
+        {
+            return false;
+        }
+
+        alias = value[..separatorIndex];
+        field = UnwrapBracketedField(value[(separatorIndex + 1)..]);
+        return IsValidAlias(alias) && !string.IsNullOrWhiteSpace(field);
+    }
+
+    private static string UnwrapBracketedField(string field)
+    {
+        return field.Length >= 2 && field[0] == '[' && field[^1] == ']'
+            ? field[1..^1]
+            : field;
+    }
+
+    private static bool TryParseColumnDataType(string value, out ColumnDataType dataType)
+    {
+        dataType = ColumnDataType.Text;
+        if (string.Equals(value, "text", StringComparison.OrdinalIgnoreCase))
+        {
+            dataType = ColumnDataType.Text;
+            return true;
+        }
+
+        if (string.Equals(value, "number", StringComparison.OrdinalIgnoreCase))
+        {
+            dataType = ColumnDataType.Number;
+            return true;
+        }
+
+        if (string.Equals(value, "date", StringComparison.OrdinalIgnoreCase))
+        {
+            dataType = ColumnDataType.Date;
+            return true;
+        }
+
+        return false;
     }
 
     private static CsvSourceOptions? ResolveSource(

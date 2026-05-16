@@ -53,10 +53,21 @@ internal sealed record CsvJoinQuery(
     /// <param name="left">The left dataset.</param>
     /// <param name="right">The right dataset.</param>
     /// <returns>A bound join query.</returns>
-    public BoundJoinQuery Bind(CsvDataSet left, CsvDataSet right)
+    public BoundJoinQuery Bind(CsvDataSet left, CsvDataSet right) =>
+        Bind(left, right, ColumnTypeRegistry.Empty);
+
+    /// <summary>
+    /// Binds the query to concrete dataset headers and configured column types.
+    /// </summary>
+    /// <param name="left">The left dataset.</param>
+    /// <param name="right">The right dataset.</param>
+    /// <param name="columnTypes">The configured column data types.</param>
+    /// <returns>A bound join query.</returns>
+    public BoundJoinQuery Bind(CsvDataSet left, CsvDataSet right, ColumnTypeRegistry columnTypes)
     {
         ArgumentNullException.ThrowIfNull(left);
         ArgumentNullException.ThrowIfNull(right);
+        ArgumentNullException.ThrowIfNull(columnTypes);
 
         var leftJoinHeader = left.ResolveHeader(LeftJoinField);
         var rightJoinHeader = right.ResolveHeader(RightJoinField);
@@ -67,19 +78,21 @@ internal sealed record CsvJoinQuery(
         {
             var sourceSide = ResolveSide(selectColumn.SourceAlias);
             var source = sourceSide == JoinSourceSide.Left ? left : right;
-            boundColumns.AddRange(source.Bind(selectColumn, sourceSide));
+            boundColumns.AddRange(source.Bind(selectColumn, sourceSide, columnTypes));
         }
 
         foreach (var sourceFilter in SourceFilters ?? [])
         {
             var sourceSide = ResolveSide(sourceFilter.SourceAlias);
             var source = sourceSide == JoinSourceSide.Left ? left : right;
+            var sourceHeader = source.ResolveHeader(sourceFilter.SourceField);
             boundFilters.Add(new BoundSourceFilter(
                 sourceSide,
-                source.ResolveHeader(sourceFilter.SourceField),
+                sourceHeader,
                 sourceFilter.Operator,
                 sourceFilter.Value,
-                sourceFilter.Values));
+                sourceFilter.Values,
+                columnTypes.Resolve(source.Alias, sourceHeader)));
         }
 
         return new BoundJoinQuery(

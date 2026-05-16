@@ -41,7 +41,10 @@ Example:
       "IgnoreBlankLines": true
     }
   },
-  "Query": "SELECT DISTINCT left.Id, left.Name, COALESCE(right.Status, 'Unknown') AS TargetStatus FROM left LEFT JOIN right ON left.Id = right.Id WHERE left.IncludeInReport = 'yes' AND right.Publish = 'yes' AND right.Score >= 90 ORDER BY TargetStatus ASC, Name ASC LIMIT 100",
+  "ColumnTypes": {
+    "right.Score": "number"
+  },
+  "Query": "SELECT DISTINCT left.Id, left.Name, COALESCE(right.Status, 'Unknown') AS TargetStatus, right.Score AS Score FROM left LEFT JOIN right ON left.Id = right.Id WHERE left.IncludeInReport = 'yes' AND right.Publish = 'yes' AND right.Score >= 90 ORDER BY Score DESC, Name ASC LIMIT 100",
   "JoinKeys": {
     "TrimWhitespace": true,
     "IgnoreCase": true
@@ -64,7 +67,7 @@ SELECT left.Id, COALESCE(right.[Full Name], 'Unknown') AS Name
 FROM left INNER|LEFT|RIGHT|FULL JOIN right
 ON left.Id = right.ExternalId
 WHERE left.Country IS NOT NULL AND right.Status IN ('Active', 'Blocked') AND right.Score >= 90
-ORDER BY Name ASC
+ORDER BY Score DESC
 LIMIT 100
 ```
 
@@ -79,6 +82,7 @@ Supported features:
 - source-row filtering before join via `WHERE alias.Field = 'value'`, `!=`, `<>`, `>`, `>=`, `<`, `<=`, `IN (...)`, `CONTAINS`, `IS NULL`, `IS NOT NULL`, joined with `AND`
 - sorting by output columns via `ORDER BY Column ASC|DESC`
 - result limits via `LIMIT n` or `TOP n`
+- typed source columns via `ColumnTypes`, currently `text`, `number`, and `date`; typed columns affect range filters and sorting
 
 ## Run
 
@@ -97,6 +101,8 @@ dotnet run --project .\src\CsvJoin
 Each source can configure `Encoding`, `TrimFields`, `NullValues`, `Quote`, and `IgnoreBlankLines`.
 
 `JoinKeys` controls matching only: `TrimWhitespace` removes leading/trailing spaces from join keys, and `IgnoreCase` makes key comparison case-insensitive.
+
+`ColumnTypes` is keyed as `alias.Field`, for example `"right.Score": "number"`. Fields not listed there are treated as `text`.
 
 ## Tests
 

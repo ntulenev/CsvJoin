@@ -160,6 +160,7 @@ public class SpectreConsoleOutputRendererTests
             new ConfiguredCsvSource("left", new CsvSourceOptions { FilePath = "left.csv", Delimiter = "," }),
             new ConfiguredCsvSource("right", new CsvSourceOptions { FilePath = "right.csv", Delimiter = "," }),
             new JoinKeyNormalizationSettings(false, false),
+            ColumnTypeRegistry.Empty,
             new JoinOutputSettings("results", ",", 10, false));
     }
 

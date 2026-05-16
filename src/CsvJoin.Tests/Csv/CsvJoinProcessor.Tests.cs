@@ -344,6 +344,37 @@ public class CsvJoinProcessorTests
         result.Rows[0].Should().Equal("Alice", "95");
     }
 
+    [Fact(DisplayName = "CsvJoinProcessor Process applies typed numeric filters and ordering.")]
+    [Trait("Category", "Unit")]
+    public void ProcessAppliesTypedNumericFiltersAndOrdering()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "Id",
+            JoinType.Inner,
+            [new SelectColumn("left", "Name", "Name"), new SelectColumn("right", "Score", "Score")],
+            SourceFilters: [new SourceFilter("right", "Score", SourceFilterOperator.GreaterThanOrEqual, "20")],
+            OrderByColumns: [new OrderByColumn("Score", OrderByDirection.Descending)]);
+        var left = BuildDataSet("left", ["Id", "Name"], [["1", "Alpha"], ["2", "Beta"], ["3", "Gamma"], ["4", "Delta"]]);
+        var right = BuildDataSet("right", ["Id", "Score"], [["1", "100"], ["2", "9"], ["3", "20"], ["4", "3"]]);
+        var columnTypes = new ColumnTypeRegistry(new Dictionary<string, ColumnDataType>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["right.Score"] = ColumnDataType.Number,
+        });
+
+        // Act
+        var result = sut.Process(query, left, right, new JoinKeyNormalizationSettings(false, false), columnTypes);
+
+        // Assert
+        result.Rows.Should().HaveCount(2);
+        result.Rows[0].Should().Equal("Alpha", "100");
+        result.Rows[1].Should().Equal("Gamma", "20");
+    }
+
     [Fact(DisplayName = "CsvJoinProcessor Process throws when order by column is missing.")]
     [Trait("Category", "Unit")]
     public void ProcessThrowsWhenOrderByColumnIsMissing()

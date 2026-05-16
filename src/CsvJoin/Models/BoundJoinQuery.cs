@@ -37,7 +37,7 @@ internal sealed class BoundJoinQuery
         Headers = SelectColumns.Select(static column => column.OutputField).ToArray();
         SourceFilters = sourceFilters ?? [];
         IsDistinct = isDistinct;
-        OrderByColumns = BindOrderByColumns(orderByColumns ?? [], Headers);
+        OrderByColumns = BindOrderByColumns(orderByColumns ?? [], Headers, SelectColumns);
         Limit = limit;
     }
 
@@ -123,14 +123,19 @@ internal sealed class BoundJoinQuery
 
     private static BoundOrderByColumn[] BindOrderByColumns(
         IReadOnlyList<OrderByColumn> orderByColumns,
-        IReadOnlyList<string> headers)
+        IReadOnlyList<string> headers,
+        IReadOnlyList<BoundSelectColumn> columns)
     {
         var resolvedColumns = new List<BoundOrderByColumn>();
 
         foreach (var orderByColumn in orderByColumns)
         {
             var index = ResolveHeaderIndex(orderByColumn.OutputField, headers);
-            resolvedColumns.Add(new BoundOrderByColumn(headers[index], index, orderByColumn.Direction));
+            resolvedColumns.Add(new BoundOrderByColumn(
+                headers[index],
+                index,
+                orderByColumn.Direction,
+                columns[index].DataType));
         }
 
         return resolvedColumns.ToArray();

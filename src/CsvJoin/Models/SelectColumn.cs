@@ -21,18 +21,36 @@ internal sealed record SelectColumn(
     /// <param name="dataSet">The dataset that provides the source field.</param>
     /// <param name="sourceSide">The join side represented by the dataset.</param>
     /// <returns>The bound output columns.</returns>
-    public IReadOnlyList<BoundSelectColumn> Bind(CsvDataSet dataSet, JoinSourceSide sourceSide)
+    public IReadOnlyList<BoundSelectColumn> Bind(CsvDataSet dataSet, JoinSourceSide sourceSide) =>
+        Bind(dataSet, sourceSide, ColumnTypeRegistry.Empty);
+
+    /// <summary>
+    /// Binds the column to a concrete dataset with configured column types.
+    /// </summary>
+    /// <param name="dataSet">The dataset that provides the source field.</param>
+    /// <param name="sourceSide">The join side represented by the dataset.</param>
+    /// <param name="columnTypes">The configured column data types.</param>
+    /// <returns>The bound output columns.</returns>
+    public IReadOnlyList<BoundSelectColumn> Bind(
+        CsvDataSet dataSet,
+        JoinSourceSide sourceSide,
+        ColumnTypeRegistry columnTypes)
     {
         ArgumentNullException.ThrowIfNull(dataSet);
+        ArgumentNullException.ThrowIfNull(columnTypes);
 
         if (IsWildcard)
         {
             return dataSet.Headers
-                .Select(header => new BoundSelectColumn(sourceSide, header, header))
+                .Select(header => new BoundSelectColumn(
+                    sourceSide,
+                    header,
+                    header,
+                    DataType: columnTypes.Resolve(dataSet.Alias, header)))
                 .ToArray();
         }
 
         var actualHeader = dataSet.ResolveHeader(SourceField);
-        return [new BoundSelectColumn(sourceSide, actualHeader, OutputField, DefaultValue)];
+        return [new BoundSelectColumn(sourceSide, actualHeader, OutputField, DefaultValue, columnTypes.Resolve(dataSet.Alias, actualHeader))];
     }
 }

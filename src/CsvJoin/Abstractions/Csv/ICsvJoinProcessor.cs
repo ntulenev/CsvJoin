@@ -29,4 +29,20 @@ internal interface ICsvJoinProcessor
         CsvDataSet left,
         CsvDataSet right,
         JoinKeyNormalizationSettings joinKeys);
+
+    /// <summary>
+    /// Processes a join query against the provided datasets using configured join key normalization and column types.
+    /// </summary>
+    /// <param name="query">The parsed join query.</param>
+    /// <param name="left">The left dataset.</param>
+    /// <param name="right">The right dataset.</param>
+    /// <param name="joinKeys">The join key normalization settings.</param>
+    /// <param name="columnTypes">The configured column data types.</param>
+    /// <returns>The join result.</returns>
+    CsvJoinResult Process(
+        CsvJoinQuery query,
+        CsvDataSet left,
+        CsvDataSet right,
+        JoinKeyNormalizationSettings joinKeys,
+        ColumnTypeRegistry columnTypes);
 }
