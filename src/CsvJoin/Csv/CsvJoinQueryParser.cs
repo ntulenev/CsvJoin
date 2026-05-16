@@ -204,16 +204,33 @@ internal sealed partial class CsvJoinQueryParser : ICsvJoinQueryParser
             return new SourceFilter(reference.SourceAlias, reference.SourceField, filterOperator);
         }
 
+        var inMatch = InFilterPattern().Match(expression);
+        if (inMatch.Success)
+        {
+            var reference = FieldReferenceParser.Parse(inMatch.Groups["ref"].Value, allowWildcard: false);
+            var values = ParseFilterValues(inMatch.Groups["values"].Value);
+            return new SourceFilter(reference.SourceAlias, reference.SourceField, SourceFilterOperator.In, Values: values);
+        }
+
+        var containsMatch = ContainsFilterPattern().Match(expression);
+        if (containsMatch.Success)
+        {
+            var reference = FieldReferenceParser.Parse(containsMatch.Groups["ref"].Value, allowWildcard: false);
+            return new SourceFilter(
+                reference.SourceAlias,
+                reference.SourceField,
+                SourceFilterOperator.Contains,
+                ParseFilterValue(containsMatch.Groups["value"].Value));
+        }
+
         var comparisonMatch = ComparisonFilterPattern().Match(expression);
         if (!comparisonMatch.Success)
         {
-            throw new FormatException($"WHERE expression '{expression}' is invalid. Use alias.Field = 'value', alias.Field != 'value', alias.Field IS NULL, or alias.Field IS NOT NULL.");
+            throw new FormatException($"WHERE expression '{expression}' is invalid. Use alias.Field = 'value', !=, <>, >, >=, <, <=, IN (...), CONTAINS 'value', IS NULL, or IS NOT NULL.");
         }
 
         var comparisonReference = FieldReferenceParser.Parse(comparisonMatch.Groups["ref"].Value, allowWildcard: false);
-        var comparisonOperator = comparisonMatch.Groups["operator"].Value == "="
-            ? SourceFilterOperator.Equals
-            : SourceFilterOperator.NotEquals;
+        var comparisonOperator = ParseFilterOperator(comparisonMatch.Groups["operator"].Value);
 
         return new SourceFilter(
             comparisonReference.SourceAlias,
@@ -221,6 +238,17 @@ internal sealed partial class CsvJoinQueryParser : ICsvJoinQueryParser
             comparisonOperator,
             ParseFilterValue(comparisonMatch.Groups["value"].Value));
     }
+
+    private static SourceFilterOperator ParseFilterOperator(string rawOperator) => rawOperator switch
+    {
+        "=" => SourceFilterOperator.Equals,
+        "!=" or "<>" => SourceFilterOperator.NotEquals,
+        ">" => SourceFilterOperator.GreaterThan,
+        ">=" => SourceFilterOperator.GreaterThanOrEqual,
+        "<" => SourceFilterOperator.LessThan,
+        "<=" => SourceFilterOperator.LessThanOrEqual,
+        _ => throw new FormatException($"WHERE operator '{rawOperator}' is not supported."),
+    };
 
     private static string ParseFilterValue(string rawValue)
     {
@@ -232,6 +260,11 @@ internal sealed partial class CsvJoinQueryParser : ICsvJoinQueryParser
 
         return trimmedValue;
     }
+
+    private static string[] ParseFilterValues(string rawValues) =>
+        SelectClauseTokenizer.Split(rawValues)
+            .Select(ParseFilterValue)
+            .ToArray();
 
     private static OrderByColumn[] ParseOrderByColumns(string orderBySegment) =>
         SelectClauseTokenizer.Split(orderBySegment)
@@ -290,7 +323,13 @@ internal sealed partial class CsvJoinQueryParser : ICsvJoinQueryParser
     [GeneratedRegex("^(?<ref>[A-Za-z_][A-Za-z0-9_]*\\.(?:\\[[^\\]]+\\]|[A-Za-z_][A-Za-z0-9_]*))\\s+IS\\s+(?<not>NOT\\s+)?NULL$", RegexOptions.IgnoreCase)]
     private static partial Regex NullFilterPattern();
 
-    [GeneratedRegex("^(?<ref>[A-Za-z_][A-Za-z0-9_]*\\.(?:\\[[^\\]]+\\]|[A-Za-z_][A-Za-z0-9_]*))\\s*(?<operator>=|!=|<>)\\s*(?<value>'(?:''|[^'])*'|[^\\s]+)$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex("^(?<ref>[A-Za-z_][A-Za-z0-9_]*\\.(?:\\[[^\\]]+\\]|[A-Za-z_][A-Za-z0-9_]*))\\s+IN\\s*\\((?<values>.+)\\)$", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    private static partial Regex InFilterPattern();
+
+    [GeneratedRegex("^(?<ref>[A-Za-z_][A-Za-z0-9_]*\\.(?:\\[[^\\]]+\\]|[A-Za-z_][A-Za-z0-9_]*))\\s+CONTAINS\\s+(?<value>'(?:''|[^'])*'|[^\\s]+)$", RegexOptions.IgnoreCase)]
+    private static partial Regex ContainsFilterPattern();
+
+    [GeneratedRegex("^(?<ref>[A-Za-z_][A-Za-z0-9_]*\\.(?:\\[[^\\]]+\\]|[A-Za-z_][A-Za-z0-9_]*))\\s*(?<operator>=|!=|<>|>=|>|<=|<)\\s*(?<value>'(?:''|[^'])*'|[^\\s]+)$", RegexOptions.IgnoreCase)]
     private static partial Regex ComparisonFilterPattern();
 
     private sealed record ParsedSelectSegment(string SelectSegment, bool IsDistinct, int? Limit);

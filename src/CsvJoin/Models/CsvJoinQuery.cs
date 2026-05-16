@@ -78,7 +78,8 @@ internal sealed record CsvJoinQuery(
                 sourceSide,
                 source.ResolveHeader(sourceFilter.SourceField),
                 sourceFilter.Operator,
-                sourceFilter.Value));
+                sourceFilter.Value,
+                sourceFilter.Values));
         }
 
         return new BoundJoinQuery(

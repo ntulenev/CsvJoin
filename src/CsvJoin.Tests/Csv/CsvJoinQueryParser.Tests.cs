@@ -118,6 +118,27 @@ public class CsvJoinQueryParserTests
         result.SourceFilters[1].Operator.Should().Be(SourceFilterOperator.IsNotNull);
     }
 
+    [Fact(DisplayName = "CsvJoinQueryParser Parse supports extended where operators.")]
+    [Trait("Category", "Unit")]
+    public void ParseSupportsExtendedWhereOperators()
+    {
+        // Arrange
+        var sut = new CsvJoinQueryParser();
+
+        // Act
+        var result = sut.Parse("SELECT left.Id FROM left INNER JOIN right ON left.Id = right.Id WHERE left.Name CONTAINS 'li' AND right.Status IN ('Active', 'Blocked') AND right.Score >= 90");
+
+        // Assert
+        result.SourceFilters.Should().NotBeNull();
+        result.SourceFilters!.Should().HaveCount(3);
+        result.SourceFilters[0].Operator.Should().Be(SourceFilterOperator.Contains);
+        result.SourceFilters[0].Value.Should().Be("li");
+        result.SourceFilters[1].Operator.Should().Be(SourceFilterOperator.In);
+        result.SourceFilters[1].Values.Should().Equal("Active", "Blocked");
+        result.SourceFilters[2].Operator.Should().Be(SourceFilterOperator.GreaterThanOrEqual);
+        result.SourceFilters[2].Value.Should().Be("90");
+    }
+
     [Fact(DisplayName = "CsvJoinQueryParser Parse supports top limit.")]
     [Trait("Category", "Unit")]
     public void ParseSupportsTopLimit()

@@ -16,6 +16,36 @@ internal enum SourceFilterOperator
     NotEquals,
 
     /// <summary>
+    /// Matches values greater than the configured value.
+    /// </summary>
+    GreaterThan,
+
+    /// <summary>
+    /// Matches values greater than or equal to the configured value.
+    /// </summary>
+    GreaterThanOrEqual,
+
+    /// <summary>
+    /// Matches values less than the configured value.
+    /// </summary>
+    LessThan,
+
+    /// <summary>
+    /// Matches values less than or equal to the configured value.
+    /// </summary>
+    LessThanOrEqual,
+
+    /// <summary>
+    /// Matches values contained in a configured set.
+    /// </summary>
+    In,
+
+    /// <summary>
+    /// Matches values containing the configured value.
+    /// </summary>
+    Contains,
+
+    /// <summary>
     /// Matches null values.
     /// </summary>
     IsNull,

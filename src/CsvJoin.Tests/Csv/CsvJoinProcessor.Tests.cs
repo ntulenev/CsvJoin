@@ -314,6 +314,36 @@ public class CsvJoinProcessorTests
         result.Diagnostics.DuplicateRightJoinKeys.Should().Be(0);
     }
 
+    [Fact(DisplayName = "CsvJoinProcessor Process applies extended source filters.")]
+    [Trait("Category", "Unit")]
+    public void ProcessAppliesExtendedSourceFilters()
+    {
+        // Arrange
+        var sut = new CsvJoinProcessor();
+        var query = new CsvJoinQuery(
+            "left",
+            "Id",
+            "right",
+            "Id",
+            JoinType.Inner,
+            [new SelectColumn("left", "Name", "Name"), new SelectColumn("right", "Score", "Score")],
+            SourceFilters:
+            [
+                new SourceFilter("left", "Name", SourceFilterOperator.Contains, "li"),
+                new SourceFilter("right", "Status", SourceFilterOperator.In, Values: ["Active", "Blocked"]),
+                new SourceFilter("right", "Score", SourceFilterOperator.GreaterThanOrEqual, "90"),
+            ]);
+        var left = BuildDataSet("left", ["Id", "Name"], [["1", "Alice"], ["2", "Bob"], ["3", "Lidia"]]);
+        var right = BuildDataSet("right", ["Id", "Status", "Score"], [["1", "Active", "95"], ["2", "Active", "99"], ["3", "Blocked", "80"]]);
+
+        // Act
+        var result = sut.Process(query, left, right);
+
+        // Assert
+        result.Rows.Should().ContainSingle();
+        result.Rows[0].Should().Equal("Alice", "95");
+    }
+
     [Fact(DisplayName = "CsvJoinProcessor Process throws when order by column is missing.")]
     [Trait("Category", "Unit")]
     public void ProcessThrowsWhenOrderByColumnIsMissing()

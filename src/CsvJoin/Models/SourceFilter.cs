@@ -7,8 +7,10 @@ namespace CsvJoin.Models;
 /// <param name="SourceField">The source field referenced by the filter.</param>
 /// <param name="Operator">The filter operator.</param>
 /// <param name="Value">The comparison value, when required by the operator.</param>
+/// <param name="Values">The comparison values, when required by the operator.</param>
 internal sealed record SourceFilter(
     string SourceAlias,
     string SourceField,
     SourceFilterOperator Operator,
-    string? Value = null);
+    string? Value = null,
+    IReadOnlyList<string>? Values = null);
